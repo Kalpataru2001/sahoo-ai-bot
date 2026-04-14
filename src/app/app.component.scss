@@ -261,10 +261,10 @@ header {
   }
 }
 
-// --- FLOATING ACTION BUTTON ---
 .fab-voice {
   position: fixed;
-  bottom: 30px;
+  // Moved up to sit comfortably ABOVE the text input area
+  bottom: 100px; 
   right: 30px;
   width: 60px;
   height: 60px;
@@ -283,6 +283,14 @@ header {
   &:hover {
     transform: scale(1.1);
     box-shadow: 0 6px 20px rgba(0, 132, 255, 0.6);
+  }
+
+  // --- NEW: MOBILE RESPONSIVENESS ---
+  @media (max-width: 768px) {
+    bottom: 85px; // Tucked right above the input bar on phones
+    right: 15px;  // Closer to the edge on small screens
+    width: 55px;  // Slightly smaller so it doesn't block the chat text
+    height: 55px;
   }
 }
 
