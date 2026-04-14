@@ -174,7 +174,7 @@ export class AppComponent implements AfterViewChecked, OnInit {
       this.currentVoiceText = 'Thinking...';
     }
 
-    this.http.post<{reply: string}>('http://localhost:3000/api/chat', { message: userText })
+    this.http.post<{reply: string}>('https://sahoo-ai-proxy.onrender.com/api/chat', { message: userText })
       .subscribe({
         next: (response) => {
           this.messages.push({ role: 'bot', text: response.reply });
