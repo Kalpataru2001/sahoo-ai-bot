@@ -1,11 +1,197 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, ViewChild, AfterViewChecked, OnInit, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+
+interface Message {
+  role: 'user' | 'bot';
+  text: string;
+}
 
 @Component({
   selector: 'app-root',
-  imports: [],
+  standalone: true,
+  imports: [CommonModule, FormsModule],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.scss'
+  styleUrls: ['./app.component.scss']
 })
-export class AppComponent {
-  title = 'ai-companion';
+export class AppComponent implements AfterViewChecked, OnInit {
+  @ViewChild('scrollMe') private myScrollContainer!: ElementRef;
+
+  isDarkMode = true;
+  userInput: string = '';
+  isLoading = false;
+  
+  // Voice Mode Variables
+  isVoiceMode = false;
+  isRecording = false; 
+  botIsSpeaking = false;
+  currentVoiceText = ''; // Shows what the bot/user is currently saying in the overlay
+
+  recognition: any; 
+  indianVoice: SpeechSynthesisVoice | null = null;
+  
+  messages: Message[] = [
+    { role: 'bot', text: 'Namaste Sahoo! Voice Mode is ready. Click the big floating mic to try it!' }
+  ];
+
+  constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
+
+  ngOnInit() {
+    this.initSpeechRecognition();
+    this.loadVoices();
+  }
+
+  ngAfterViewChecked() {
+    this.scrollToBottom();
+  }
+
+  scrollToBottom(): void {
+    try {
+      this.myScrollContainer.nativeElement.scrollTop = this.myScrollContainer.nativeElement.scrollHeight;
+    } catch(err) { }
+  }
+
+  toggleTheme() {
+    this.isDarkMode = !this.isDarkMode;
+  }
+
+  // --- NEW: VOICE MODE CONTROLS ---
+  enterVoiceMode() {
+    this.isVoiceMode = true;
+    this.currentVoiceText = 'Listening...';
+    this.startListening();
+  }
+
+  closeVoiceMode() {
+    this.isVoiceMode = false;
+    this.isRecording = false;
+    this.botIsSpeaking = false;
+    if (this.recognition) this.recognition.stop();
+    window.speechSynthesis.cancel();
+  }
+
+  // --- SPEECH RECOGNITION (EARS) ---
+  initSpeechRecognition() {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    
+    if (SpeechRecognition) {
+      this.recognition = new SpeechRecognition();
+      this.recognition.continuous = false;
+      this.recognition.interimResults = false;
+
+      this.recognition.onstart = () => {
+        this.isRecording = true;
+        this.botIsSpeaking = false;
+        this.currentVoiceText = 'Listening...';
+        this.cdr.detectChanges(); 
+      };
+
+      this.recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        this.userInput = transcript;
+        this.isRecording = false;
+        this.currentVoiceText = transcript; // Show what you just said
+        this.cdr.detectChanges(); 
+        this.sendMessage(); 
+      };
+
+      this.recognition.onerror = (event: any) => {
+        if (event.error === 'no-speech') {
+          this.isRecording = false;
+          if (this.isVoiceMode) this.currentVoiceText = 'Tap the orb to speak...';
+          this.cdr.detectChanges(); 
+          return; 
+        }
+        this.isRecording = false;
+        this.cdr.detectChanges(); 
+      };
+
+      this.recognition.onend = () => {
+        this.isRecording = false;
+        this.cdr.detectChanges(); 
+      };
+    }
+  }
+
+  startListening() {
+    if (this.recognition && !this.isRecording) {
+      window.speechSynthesis.cancel(); // Stop bot if you interrupt it
+      this.recognition.start();
+    }
+  }
+
+  // --- SPEECH SYNTHESIS (VOICE) ---
+  loadVoices() {
+    const findAndSetVoice = () => {
+      const voices = window.speechSynthesis.getVoices();
+      this.indianVoice = voices.find(voice => voice.lang === 'en-IN' || voice.lang === 'hi-IN') || null;
+    };
+    findAndSetVoice();
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = findAndSetVoice;
+    }
+  }
+
+  speak(text: string) {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      if (this.indianVoice) utterance.voice = this.indianVoice;
+
+      // When bot starts speaking
+      utterance.onstart = () => {
+        this.botIsSpeaking = true;
+        this.currentVoiceText = text; // Show what the bot is saying
+        this.cdr.detectChanges();
+      };
+
+      // When bot finishes speaking
+      utterance.onend = () => {
+        this.botIsSpeaking = false;
+        this.cdr.detectChanges();
+        
+        // AUTO-LOOP: If we are still in voice mode, automatically listen again!
+        if (this.isVoiceMode) {
+          setTimeout(() => this.startListening(), 500); 
+        }
+      };
+
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  // --- API CALL ---
+  sendMessage() {
+    if (!this.userInput.trim() || this.isLoading) return;
+
+    const userText = this.userInput;
+    this.messages.push({ role: 'user', text: userText });
+    this.userInput = ''; 
+    this.isLoading = true;
+    
+    if (this.isVoiceMode) {
+      this.currentVoiceText = 'Thinking...';
+    }
+
+    this.http.post<{reply: string}>('http://localhost:3000/api/chat', { message: userText })
+      .subscribe({
+        next: (response) => {
+          this.messages.push({ role: 'bot', text: response.reply });
+          this.isLoading = false;
+          this.speak(response.reply);
+        },
+        error: (err) => {
+          const errorMessage = err.error?.error || 'My backend seems to be sleeping!';
+          
+          this.messages.push({ role: 'bot', text: errorMessage });
+          this.isLoading = false;
+          
+          if (this.isVoiceMode) {
+            this.currentVoiceText = 'Connection Error.';
+          }
+          this.speak(errorMessage);
+        }
+      });
+  }
 }
