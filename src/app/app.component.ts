@@ -176,7 +176,8 @@ export class AppComponent implements AfterViewChecked, OnInit {
 
     const geminiHistory = this.messages
       .filter(m => m.text !== 'Backend is sleeping!' && m.text !== 'Connection Error.')
-      .slice(-10) 
+      .slice(0, -1) 
+      .slice(-10)   
       .map(m => ({
         role: m.role === 'bot' ? 'model' : 'user',
         parts: [{ text: m.text }]
