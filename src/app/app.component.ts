@@ -179,7 +179,9 @@ export class AppComponent implements AfterViewChecked, OnInit {
         next: (response) => {
           this.messages.push({ role: 'bot', text: response.reply });
           this.isLoading = false;
-          this.speak(response.reply);
+          if (this.isVoiceMode) {
+            this.speak(response.reply);
+          }
         },
         error: (err) => {
           const errorMessage = err.error?.error || 'My backend seems to be sleeping!';
