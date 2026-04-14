@@ -174,7 +174,15 @@ export class AppComponent implements AfterViewChecked, OnInit {
       this.currentVoiceText = 'Thinking...';
     }
 
-    this.http.post<{reply: string}>('https://sahoo-ai-proxy.onrender.com/api/chat', { message: userText })
+    const geminiHistory = this.messages
+      .filter(m => m.text !== 'Backend is sleeping!' && m.text !== 'Connection Error.')
+      .slice(-10) 
+      .map(m => ({
+        role: m.role === 'bot' ? 'model' : 'user',
+        parts: [{ text: m.text }]
+      }));
+
+    this.http.post<{reply: string}>('https://sahoo-ai-proxy.onrender.com/api/chat', { message: userText ,history: geminiHistory})
       .subscribe({
         next: (response) => {
           this.messages.push({ role: 'bot', text: response.reply });
