@@ -80,43 +80,74 @@ export class AppComponent implements AfterViewChecked, OnInit {
   initSpeechRecognition() {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     
-    if (SpeechRecognition) {
-      this.recognition = new SpeechRecognition();
-      this.recognition.continuous = false;
-      this.recognition.interimResults = false;
-
-      this.recognition.onstart = () => {
-        this.isRecording = true;
-        this.botIsSpeaking = false;
-        this.currentVoiceText = 'Listening...';
-        this.cdr.detectChanges(); 
-      };
-
-      this.recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        this.userInput = transcript;
-        this.isRecording = false;
-        this.currentVoiceText = transcript; // Show what you just said
-        this.cdr.detectChanges(); 
-        this.sendMessage(); 
-      };
-
-      this.recognition.onerror = (event: any) => {
-        if (event.error === 'no-speech') {
-          this.isRecording = false;
-          if (this.isVoiceMode) this.currentVoiceText = 'Tap the orb to speak...';
-          this.cdr.detectChanges(); 
-          return; 
-        }
-        this.isRecording = false;
-        this.cdr.detectChanges(); 
-      };
-
-      this.recognition.onend = () => {
-        this.isRecording = false;
-        this.cdr.detectChanges(); 
-      };
+    if (!SpeechRecognition) {
+      console.warn("Speech Recognition is not supported in this browser.");
+      return;
     }
+
+    this.recognition = new SpeechRecognition();
+    
+    // Force the mic to stop listening when you pause
+    this.recognition.continuous = false;
+    
+    // CRITICAL FIX: Set to true so we can process chunks of speech live
+    this.recognition.interimResults = true;
+
+    this.recognition.onstart = () => {
+      this.isRecording = true;
+      this.botIsSpeaking = false;
+      this.currentVoiceText = 'Listening...';
+      this.cdr.detectChanges(); 
+    };
+
+    this.recognition.onresult = (event: any) => {
+      let finalTranscript = '';
+      let interimTranscript = '';
+
+      // Loop through all speech chunks to separate what is final vs what is still being spoken
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
+      }
+
+      // Update the UI live as you are speaking (so it feels responsive)
+      if (interimTranscript) {
+        this.userInput = interimTranscript;
+        this.currentVoiceText = interimTranscript;
+        this.cdr.detectChanges();
+      }
+
+      // Once the browser confirms the sentence is done, auto-send it!
+      if (finalTranscript) {
+        this.userInput = finalTranscript;
+        this.currentVoiceText = finalTranscript; // Show final text
+        this.isRecording = false;                // Turn off mic animation
+        this.cdr.detectChanges(); 
+        
+        this.sendMessage(); // Send to Gemini instantly
+      }
+    };
+
+    this.recognition.onerror = (event: any) => {
+      if (event.error === 'no-speech') {
+        this.isRecording = false;
+        if (this.isVoiceMode) this.currentVoiceText = 'Tap the orb to speak...';
+        this.cdr.detectChanges(); 
+        return; 
+      }
+      console.error("Speech recognition error:", event.error);
+      this.isRecording = false;
+      this.cdr.detectChanges(); 
+    };
+
+    this.recognition.onend = () => {
+      // Failsafe to ensure UI resets when the mic fully powers down
+      this.isRecording = false;
+      this.cdr.detectChanges(); 
+    };
   }
 
   startListening() {
