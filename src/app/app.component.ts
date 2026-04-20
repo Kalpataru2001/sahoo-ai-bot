@@ -27,6 +27,7 @@ export class AppComponent implements AfterViewChecked, OnInit {
   isRecording = false; 
   botIsSpeaking = false;
   currentVoiceText = ''; // Shows what the bot/user is currently saying in the overlay
+  availableVoices: SpeechSynthesisVoice[] = [];
 
   recognition: any; 
   indianVoice: SpeechSynthesisVoice | null = null;
@@ -38,13 +39,17 @@ export class AppComponent implements AfterViewChecked, OnInit {
   constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
-    this.initSpeechRecognition();
+    this.initSpeechRecognition(); 
     this.loadVoices();
+    window.speechSynthesis.onvoiceschanged = () => {
+      this.loadVoices();
+    };
   }
 
   ngAfterViewChecked() {
     this.scrollToBottom();
   }
+  
 
   scrollToBottom(): void {
     try {
@@ -121,47 +126,47 @@ export class AppComponent implements AfterViewChecked, OnInit {
     }
   }
 
-  // --- SPEECH SYNTHESIS (VOICE) ---
+
   loadVoices() {
-    const findAndSetVoice = () => {
-      const voices = window.speechSynthesis.getVoices();
-      this.indianVoice = voices.find(voice => voice.lang === 'en-IN' || voice.lang === 'hi-IN') || null;
-    };
-    findAndSetVoice();
-    if (window.speechSynthesis.onvoiceschanged !== undefined) {
-      window.speechSynthesis.onvoiceschanged = findAndSetVoice;
-    }
+    this.availableVoices = window.speechSynthesis.getVoices();
   }
 
   speak(text: string) {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      if (this.indianVoice) utterance.voice = this.indianVoice;
-
-      // When bot starts speaking
-      utterance.onstart = () => {
-        this.botIsSpeaking = true;
-        this.currentVoiceText = text; // Show what the bot is saying
-        this.cdr.detectChanges();
-      };
-
-      // When bot finishes speaking
-      utterance.onend = () => {
-        this.botIsSpeaking = false;
-        this.cdr.detectChanges();
-        
-        // AUTO-LOOP: If we are still in voice mode, automatically listen again!
-        if (this.isVoiceMode) {
-          setTimeout(() => this.startListening(), 500); 
-        }
-      };
-
-      window.speechSynthesis.speak(utterance);
+    if (!window.speechSynthesis) {
+      console.warn("Your browser does not support voice output.");
+      return;
     }
+
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    const isOdia = /[\u0B00-\u0B7F]/.test(text);   
+    const isHindi = /[\u0900-\u097F]/.test(text);  
+
+    let targetLang = 'en-IN'; 
+
+    if (isOdia) {
+      targetLang = 'or-IN';
+    } else if (isHindi) {
+      targetLang = 'hi-IN';
+    }
+    
+    let matchedVoice = this.availableVoices.find(v => v.lang === targetLang);
+    if (!matchedVoice) {
+      matchedVoice = this.availableVoices.find(v => v.lang === 'hi-IN') 
+                  || this.availableVoices.find(v => v.lang === 'en-IN');
+    }
+
+    if (matchedVoice) {
+      utterance.voice = matchedVoice;
+    }
+    utterance.lang = targetLang;
+    utterance.rate = 0.95;  
+    utterance.pitch = 1.05; 
+
+    window.speechSynthesis.speak(utterance);
   }
 
-  // --- API CALL ---
   sendMessage() {
     if (!this.userInput.trim() || this.isLoading) return;
 
