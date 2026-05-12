@@ -1,6 +1,9 @@
 <div class="app-layout" [class.dark-mode]="isDarkMode">
-
+<div class="sidebar-overlay" *ngIf="isSidebarOpen" (click)="isSidebarOpen = false"></div>
   <aside class="sidebar" [class.open]="isSidebarOpen">
+    <div class="mobile-close-header">
+      <button class="close-sidebar-btn" (click)="isSidebarOpen = false">✕</button>
+    </div>
     <button class="new-chat-btn" (click)="createNewChat()">+ New Chat</button>
 
     <div class="chat-list">

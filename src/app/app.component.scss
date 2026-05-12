@@ -407,6 +407,35 @@ header {
   header .menu-btn { 
     display: block; // Show hamburger icon on phones
   }
+  // NEW: The dark blurred background
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    z-index: 990; // Sits just below the sidebar
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  // NEW: The "X" close button container
+  .mobile-close-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+
+    .close-sidebar-btn {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: #555;
+      cursor: pointer;
+      padding: 5px;
+    }
+  }
+  .app-layout.dark-mode .close-sidebar-btn {
+    color: #ccc;
+  }
   
   .sidebar {
     position: absolute;
@@ -414,7 +443,7 @@ header {
     left: 0; top: 0;
     transform: translateX(-100%); // Hide off-screen by default
     box-shadow: 5px 0 20px rgba(0,0,0,0.5);
-    
+    z-index: 1000;
     &.open { 
       transform: translateX(0); // Slide in when hamburger is clicked
     }
@@ -506,4 +535,15 @@ header {
 @keyframes slideUp { 
   from { opacity: 0; transform: translateY(20px); } 
   to { opacity: 1; transform: translateY(0); } 
+}
+
+// ==========================================
+// DESKTOP ENFORCEMENT
+// Force mobile elements to hide on laptops/desktops
+// ==========================================
+@media (min-width: 769px) {
+  .mobile-close-header,
+  .sidebar-overlay {
+    display: none !important;
+  }
 }
