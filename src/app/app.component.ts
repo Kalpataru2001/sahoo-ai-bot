@@ -7,6 +7,11 @@ interface Message {
   role: 'user' | 'bot';
   text: string;
 }
+interface ChatSession {
+  id: number;
+  title: string;
+  messages: Message[];
+}
 
 @Component({
   selector: 'app-root',
@@ -18,6 +23,9 @@ interface Message {
 export class AppComponent implements AfterViewChecked, OnInit {
   @ViewChild('scrollMe') private myScrollContainer!: ElementRef;
 
+  sessions: ChatSession[] = [];
+  currentSessionId: number | null = null;
+  isSidebarOpen = false; // For mobile phones
   isDarkMode = true;
   userInput: string = '';
   isLoading = false;
@@ -44,12 +52,63 @@ export class AppComponent implements AfterViewChecked, OnInit {
     window.speechSynthesis.onvoiceschanged = () => {
       this.loadVoices();
     };
+    const savedSessions = localStorage.getItem('veda_sessions');
+    if (savedSessions) {
+      this.sessions = JSON.parse(savedSessions);
+      this.selectChat(this.sessions[0].id); 
+    } else {
+      this.createNewChat(); 
+    }
   }
 
   ngAfterViewChecked() {
     this.scrollToBottom();
   }
-  
+  // --- SESSION MANAGEMENT ---
+  createNewChat() {
+    const newId = Date.now();
+    const newSession: ChatSession = {
+      id: newId,
+      title: 'New Conversation',
+      messages: [{ role: 'bot', text: 'Namaste Sahoo! What is on your mind?' }]
+    };
+    
+    // Add to the top of the list
+    this.sessions.unshift(newSession);
+    
+    // Keep only the latest 10 chats!
+    if (this.sessions.length > 10) {
+      this.sessions.pop(); 
+    }
+    
+    this.selectChat(newId);
+  }
+
+  selectChat(id: number) {
+    this.currentSessionId = id;
+    const session = this.sessions.find(s => s.id === id);
+    if (session) {
+      this.messages = session.messages;
+    }
+    this.isSidebarOpen = false; // Auto-close sidebar on mobile after clicking
+    this.saveChats();
+  }
+
+  saveChats() {
+    const session = this.sessions.find(s => s.id === this.currentSessionId);
+    if (session) {
+      session.messages = this.messages;
+      
+      // Auto-generate a title based on your first message!
+      if (session.title === 'New Conversation' && this.messages.length > 1) {
+        const firstUserMsg = this.messages.find(m => m.role === 'user');
+        if (firstUserMsg) {
+          session.title = firstUserMsg.text.substring(0, 25) + '...';
+        }
+      }
+    }
+    localStorage.setItem('veda_sessions', JSON.stringify(this.sessions));
+  }
 
   scrollToBottom(): void {
     try {
@@ -203,6 +262,7 @@ export class AppComponent implements AfterViewChecked, OnInit {
 
     const userText = this.userInput;
     this.messages.push({ role: 'user', text: userText });
+    this.saveChats()
     this.userInput = ''; 
     this.isLoading = true;
     
@@ -210,7 +270,7 @@ export class AppComponent implements AfterViewChecked, OnInit {
       this.currentVoiceText = 'Thinking...';
     }
 
-    const geminiHistory = this.messages
+    let geminiHistory = this.messages
       .filter(m => m.text !== 'Backend is sleeping!' && m.text !== 'Connection Error.')
       .slice(0, -1) 
       .slice(-10)   
@@ -218,11 +278,15 @@ export class AppComponent implements AfterViewChecked, OnInit {
         role: m.role === 'bot' ? 'model' : 'user',
         parts: [{ text: m.text }]
       }));
+      while (geminiHistory.length > 0 && geminiHistory[0].role === 'model') {
+      geminiHistory.shift();
+    }
 
-    this.http.post<{reply: string}>('https://sahoo-ai-proxy.onrender.com/api/chat', { message: userText ,history: geminiHistory})
+    this.http.post<{reply: string}>('https://sahoo-ai-proxy-us.onrender.com/api/chat', { message: userText ,history: geminiHistory})
       .subscribe({
         next: (response) => {
           this.messages.push({ role: 'bot', text: response.reply });
+          this.saveChats()
           this.isLoading = false;
           if (this.isVoiceMode) {
             this.speak(response.reply);
