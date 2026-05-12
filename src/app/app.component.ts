@@ -36,6 +36,8 @@ export class AppComponent implements AfterViewChecked, OnInit {
   botIsSpeaking = false;
   currentVoiceText = ''; // Shows what the bot/user is currently saying in the overlay
   availableVoices: SpeechSynthesisVoice[] = [];
+  isDeleteModalOpen = false;
+  chatToDeleteId: number | null = null;
 
   recognition: any; 
   indianVoice: SpeechSynthesisVoice | null = null;
@@ -108,6 +110,63 @@ export class AppComponent implements AfterViewChecked, OnInit {
       }
     }
     localStorage.setItem('veda_sessions', JSON.stringify(this.sessions));
+  }
+
+  deleteChat(event: Event, id: number) {
+    // CRITICAL: This stops the click from also triggering 'selectChat'
+    event.stopPropagation(); 
+
+    // 1. Remove the chat from our array
+    this.sessions = this.sessions.filter(s => s.id !== id);
+
+    // 2. Save the updated list to local storage
+    localStorage.setItem('veda_sessions', JSON.stringify(this.sessions));
+
+    // 3. Smart Handling: If you just deleted the chat you were currently reading...
+    if (this.currentSessionId === id) {
+      if (this.sessions.length > 0) {
+        // Open the newest available chat
+        this.selectChat(this.sessions[0].id); 
+      } else {
+        // If that was the last chat, create a brand new one!
+        this.createNewChat(); 
+      }
+    }
+  }
+
+  openDeleteModal(event: Event, id: number) {
+    event.stopPropagation(); // Stop from clicking the chat behind it
+    this.chatToDeleteId = id;
+    this.isDeleteModalOpen = true;
+  }
+
+  cancelDelete() {
+    this.isDeleteModalOpen = false;
+    this.chatToDeleteId = null;
+  }
+
+  confirmDelete() {
+    if (this.chatToDeleteId === null) return;
+
+    const id = this.chatToDeleteId;
+    
+    // 1. Remove from array
+    this.sessions = this.sessions.filter(s => s.id !== id);
+
+    // 2. Save to storage
+    localStorage.setItem('veda_sessions', JSON.stringify(this.sessions));
+
+    // 3. Smart Handling for active chats
+    if (this.currentSessionId === id) {
+      if (this.sessions.length > 0) {
+        this.selectChat(this.sessions[0].id); 
+      } else {
+        this.createNewChat(); 
+      }
+    }
+
+    // 4. Close the modal
+    this.cancelDelete();
   }
 
   scrollToBottom(): void {
