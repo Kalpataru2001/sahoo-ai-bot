@@ -539,21 +539,123 @@ header {
 // MOBILE RESPONSIVENESS
 // ==========================================
 @media (max-width: 768px) {
-  header .menu-btn { 
-    display: block; // Show hamburger icon on phones
+  header {
+    padding: 10px 12px;
+    gap: 8px;
+
+    .header-info {
+      gap: 8px;
+    }
+
+    .menu-btn { 
+      display: block; // Show hamburger icon on phones
+      font-size: 1.4rem;
+    }
+
+    .avatar-circle {
+      font-size: 1.4rem;
+      padding: 3px;
+    }
+
+    .title {
+      h2 { font-size: 1rem; }
+      .status { font-size: 0.75rem; }
+    }
   }
-  // NEW: The dark blurred background
+
+  .header-actions {
+    gap: 6px;
+
+    .theme-toggle {
+      font-size: 1.2rem;
+      padding: 4px;
+    }
+
+    .signin-btn-header {
+      padding: 6px 12px;
+      font-size: 0.82rem;
+    }
+
+    .user-pill {
+      padding: 3px 8px;
+      gap: 6px;
+
+      .user-photo {
+        width: 24px;
+        height: 24px;
+      }
+
+      .user-name-pill {
+        max-width: 80px;
+        font-size: 0.8rem;
+      }
+
+      .signout-btn-pill {
+        font-size: 0.75rem;
+        padding: 0;
+      }
+    }
+  }
+
+  .chat-box {
+    padding: 12px 8px;
+    gap: 12px;
+  }
+
+  .message-row {
+    max-width: 100%;
+  }
+
+  .message-bubble {
+    max-width: 93%;
+    padding: 12px 14px;
+    font-size: 0.93rem;
+    line-height: 1.55;
+
+    pre {
+      padding: 10px 12px;
+      font-size: 0.84rem;
+      margin: 0.6rem 0;
+      border-radius: 8px;
+    }
+
+    ul, ol {
+      margin-left: 1.1rem;
+    }
+
+    h1 { font-size: 1.2rem; }
+    h2 { font-size: 1.1rem; }
+    h3 { font-size: 1rem; }
+  }
+
+  .input-area {
+    padding: 8px 10px;
+
+    .input-wrapper {
+      padding: 6px 12px;
+
+      input {
+        font-size: 0.92rem;
+      }
+
+      .send-btn {
+        width: 36px;
+        height: 36px;
+        svg { width: 18px; height: 18px; }
+      }
+    }
+  }
+
   .sidebar-overlay {
     display: block;
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(2px);
-    z-index: 990; // Sits just below the sidebar
+    z-index: 990;
     animation: fadeIn 0.2s ease-out;
   }
 
-  // NEW: The "X" close button container
   .mobile-close-header {
     display: flex;
     justify-content: flex-end;
@@ -576,19 +678,42 @@ header {
     position: absolute;
     height: 100%;
     left: 0; top: 0;
-    transform: translateX(-100%); // Hide off-screen by default
+    width: 270px;
+    transform: translateX(-100%);
     box-shadow: 5px 0 20px rgba(0,0,0,0.5);
     z-index: 1000;
     &.open { 
-      transform: translateX(0); // Slide in when hamburger is clicked
+      transform: translateX(0);
     }
   }
 
   .fab-voice {
-    bottom: 85px; 
-    right: 15px; 
-    width: 55px; 
-    height: 55px;
+    bottom: 75px; 
+    right: 12px; 
+    width: 48px; 
+    height: 48px;
+
+    svg { width: 22px; height: 22px; }
+  }
+}
+
+// Extra Small Devices (Phones < 480px)
+@media (max-width: 480px) {
+  header {
+    .title .status { display: none; } // Hide online text on ultra small screens
+  }
+
+  .header-actions {
+    .user-pill {
+      .user-name-pill {
+        display: none; // Hide name text so photo and signout button fit cleanly!
+      }
+    }
+  }
+
+  .message-bubble {
+    max-width: 96%;
+    padding: 10px 12px;
   }
 }
 
