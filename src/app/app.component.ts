@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, AfterViewChecked, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, ElementRef, ViewChild, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -24,7 +24,7 @@ interface ChatSession {
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements AfterViewChecked, OnInit {
+export class AppComponent implements OnInit {
   @ViewChild('scrollMe') private myScrollContainer!: ElementRef;
 
   sessions: ChatSession[] = [];
@@ -170,26 +170,9 @@ export class AppComponent implements AfterViewChecked, OnInit {
     sessionStorage.setItem('pwa_banner_dismissed', 'true');
   }
 
-  private shouldAutoScroll = true;
-
-  ngAfterViewChecked() {
-    if (this.shouldAutoScroll) {
-      this.scrollToBottom();
-    }
-  }
-
-  onScroll(event: Event): void {
-    const el = event.target as HTMLElement;
-    if (el) {
-      // If user is within 100px of the bottom, keep auto-scrolling enabled. Otherwise disable it so user can read history!
-      const distanceToBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-      this.shouldAutoScroll = distanceToBottom <= 100;
-    }
-  }
-
-  scrollToBottom(force = false): void {
+  scrollToBottom(): void {
     try {
-      if (force || this.shouldAutoScroll) {
+      if (this.myScrollContainer && this.myScrollContainer.nativeElement) {
         this.myScrollContainer.nativeElement.scrollTop = this.myScrollContainer.nativeElement.scrollHeight;
       }
     } catch(err) { }
@@ -221,9 +204,8 @@ export class AppComponent implements AfterViewChecked, OnInit {
       this.messages = session.messages;
     }
     this.isSidebarOpen = false; // Auto-close sidebar on mobile after clicking
-    this.shouldAutoScroll = true;
     this.saveChats();
-    setTimeout(() => this.scrollToBottom(true), 50);
+    setTimeout(() => this.scrollToBottom(), 60);
   }
 
   saveChats() {
@@ -458,11 +440,10 @@ export class AppComponent implements AfterViewChecked, OnInit {
 
     const userText = this.userInput;
     this.messages.push({ role: 'user', text: userText });
-    this.shouldAutoScroll = true;
     this.saveChats();
     this.userInput = ''; 
     this.isLoading = true;
-    setTimeout(() => this.scrollToBottom(true), 50);
+    setTimeout(() => this.scrollToBottom(), 60);
     
     if (this.isVoiceMode) {
       this.currentVoiceText = 'Thinking...';
@@ -484,10 +465,9 @@ export class AppComponent implements AfterViewChecked, OnInit {
       .subscribe({
         next: (response) => {
           this.messages.push({ role: 'bot', text: response.reply });
-          this.shouldAutoScroll = true;
           this.saveChats();
           this.isLoading = false;
-          setTimeout(() => this.scrollToBottom(true), 50);
+          setTimeout(() => this.scrollToBottom(), 60);
           if (this.isVoiceMode) {
             this.speak(response.reply);
           }
