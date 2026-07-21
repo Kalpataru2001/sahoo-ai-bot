@@ -123,11 +123,14 @@ export class AppComponent implements AfterViewChecked, OnInit {
   }
 
   initPwaInstallPrompt() {
+    // Clear legacy permanent dismissal so banner shows up again
+    localStorage.removeItem('pwa_banner_dismissed');
+
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 768;
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
     this.isIosDevice = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-    if (isMobile && !isStandalone && !localStorage.getItem('pwa_banner_dismissed')) {
+    if (isMobile && !isStandalone && !sessionStorage.getItem('pwa_banner_dismissed')) {
       window.addEventListener('beforeinstallprompt', (e: any) => {
         e.preventDefault();
         this.deferredInstallPrompt = e;
@@ -137,11 +140,11 @@ export class AppComponent implements AfterViewChecked, OnInit {
 
       // Mobile fallback prompt
       setTimeout(() => {
-        if (!localStorage.getItem('pwa_banner_dismissed')) {
+        if (!sessionStorage.getItem('pwa_banner_dismissed')) {
           this.showInstallBanner = true;
           this.cdr.detectChanges();
         }
-      }, 2500);
+      }, 2000);
     }
   }
 
@@ -164,7 +167,7 @@ export class AppComponent implements AfterViewChecked, OnInit {
   dismissInstallBanner() {
     this.showInstallBanner = false;
     this.showIosInstructions = false;
-    localStorage.setItem('pwa_banner_dismissed', 'true');
+    sessionStorage.setItem('pwa_banner_dismissed', 'true');
   }
 
   private shouldAutoScroll = true;
