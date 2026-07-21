@@ -186,4 +186,20 @@
       </div>
     </div>
   </div>
+
+  <!-- MOBILE PWA APP INSTALL BANNER -->
+  <div class="pwa-mobile-banner" *ngIf="showInstallBanner">
+    <button class="banner-close-btn" (click)="dismissInstallBanner()" title="Dismiss">✕</button>
+    <div class="banner-body">
+      <div class="banner-icon-box">🤖</div>
+      <div class="banner-text-box">
+        <h4>Install AI Companion</h4>
+        <p *ngIf="!showIosInstructions">Add to Home Screen for a faster, native app experience!</p>
+        <p *ngIf="showIosInstructions">Tap <strong>Share</strong> icon below then select <strong>'Add to Home Screen'</strong>.</p>
+      </div>
+      <button class="banner-action-btn" (click)="installPwa()">
+        {{ isIosDevice && showIosInstructions ? 'Got it' : 'Install' }}
+      </button>
+    </div>
+  </div>
 </div>

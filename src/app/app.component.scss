@@ -1067,6 +1067,106 @@ header {
   }
 }
 
+// ==========================================
+// MOBILE PWA APP INSTALL BANNER (BOTTOM STICKY)
+// ==========================================
+.pwa-mobile-banner {
+  position: fixed;
+  bottom: 20px;
+  left: 14px;
+  right: 14px;
+  margin: 0 auto;
+  max-width: 440px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  padding: 14px 16px;
+  z-index: 2800;
+  animation: slideUp 0.35s ease-out;
+
+  .banner-close-btn {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: transparent;
+    border: none;
+    font-size: 1rem;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px;
+    &:hover { color: #0f172a; }
+  }
+
+  .banner-body {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .banner-icon-box {
+      font-size: 1.8rem;
+      background: #f0f4f9;
+      border-radius: 12px;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .banner-text-box {
+      flex: 1;
+      min-width: 0;
+
+      h4 {
+        margin: 0 0 2px 0;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0f172a;
+      }
+
+      p {
+        margin: 0;
+        font-size: 0.78rem;
+        color: #64748b;
+        line-height: 1.35;
+      }
+    }
+
+    .banner-action-btn {
+      background: linear-gradient(135deg, #0084ff, #00c6ff);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      box-shadow: 0 3px 8px rgba(0, 132, 255, 0.3);
+      transition: transform 0.2s;
+      &:active { transform: scale(0.95); }
+    }
+  }
+}
+
+// Dark Mode Support for PWA Banner
+.app-layout.dark-mode {
+  .pwa-mobile-banner {
+    background: #1e293b;
+    border: 1px solid #334155;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+
+    .banner-close-btn { color: #94a3b8; &:hover { color: #f8fafc; } }
+    .banner-body {
+      .banner-icon-box { background: #0f172a; }
+      .banner-text-box {
+        h4 { color: #f8fafc; }
+        p { color: #94a3b8; }
+      }
+    }
+  }
+}
+
 // Animations
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { 
