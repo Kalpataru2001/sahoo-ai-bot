@@ -43,7 +43,9 @@
       <header>
         <div class="header-info">
           <button class="menu-btn" (click)="isSidebarOpen = !isSidebarOpen">☰</button>
-          <div class="avatar-circle">🤖</div>
+          <div class="avatar-circle">
+            <img src="app-icon.jpg" class="app-icon-img" alt="AI Companion Icon">
+          </div>
           <div class="title">
             <h2>AI Companion</h2>
             <span class="status">Online</span>
@@ -191,7 +193,9 @@
   <div class="pwa-mobile-banner" *ngIf="showInstallBanner">
     <button class="banner-close-btn" (click)="dismissInstallBanner()" title="Dismiss">✕</button>
     <div class="banner-body">
-      <div class="banner-icon-box">🤖</div>
+      <div class="banner-icon-box">
+        <img src="app-icon.jpg" class="pwa-app-icon-img" alt="AI Companion App Icon">
+      </div>
       <div class="banner-text-box">
         <h4>Install AI Companion</h4>
         <p *ngIf="!showIosInstructions">Add to Home Screen for a faster, native app experience!</p>

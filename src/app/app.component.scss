@@ -152,9 +152,28 @@ header {
   .header-info {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 12px;
     min-width: 0;
     flex-shrink: 1;
+
+    .avatar-circle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      overflow: hidden;
+      flex-shrink: 0;
+
+      .app-icon-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 132, 255, 0.3);
+      }
+    }
 
     .title {
       min-width: 0;
@@ -1103,14 +1122,21 @@ header {
     gap: 12px;
 
     .banner-icon-box {
-      font-size: 1.8rem;
-      background: #f0f4f9;
+      width: 44px;
+      height: 44px;
       border-radius: 12px;
-      padding: 6px;
+      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+
+      .pwa-app-icon-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 12px;
+      }
     }
 
     .banner-text-box {
