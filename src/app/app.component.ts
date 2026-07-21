@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { marked } from 'marked';
+import { User } from 'firebase/auth';
+import { AuthService } from './services/auth.service';
 
 interface Message {
   role: 'user' | 'bot';
@@ -32,6 +34,16 @@ export class AppComponent implements AfterViewChecked, OnInit {
   userInput: string = '';
   isLoading = false;
   
+  // Auth Variables
+  currentUser: User | null = null;
+  isAuthModalOpen = false;
+  authMode: 'login' | 'register' = 'login';
+  authEmail = '';
+  authPassword = '';
+  authName = '';
+  authError = '';
+  authLoading = false;
+
   // Voice Mode Variables
   isVoiceMode = false;
   isRecording = false; 
@@ -48,7 +60,12 @@ export class AppComponent implements AfterViewChecked, OnInit {
     { role: 'bot', text: 'Namaste Sahoo! Voice Mode is ready. Click the big floating mic to try it!' }
   ];
 
-  constructor(private http: HttpClient, private cdr: ChangeDetectorRef, private sanitizer: DomSanitizer) {}
+  constructor(
+    private http: HttpClient, 
+    private cdr: ChangeDetectorRef, 
+    private sanitizer: DomSanitizer,
+    public authService: AuthService
+  ) {}
 
   renderMarkdown(text: string): SafeHtml {
     if (!text) return '';
@@ -66,13 +83,35 @@ export class AppComponent implements AfterViewChecked, OnInit {
     window.speechSynthesis.onvoiceschanged = () => {
       this.loadVoices();
     };
-    const savedSessions = localStorage.getItem('veda_sessions');
-    if (savedSessions) {
-      this.sessions = JSON.parse(savedSessions);
-      this.selectChat(this.sessions[0].id); 
-    } else {
-      this.createNewChat(); 
-    }
+
+    // Firebase Auth State Listener
+    this.authService.currentUser$.subscribe(async (user) => {
+      this.currentUser = user;
+      if (user) {
+        // Fetch User's Firestore Sessions
+        const cloudSessions = await this.authService.getUserSessions(user.uid);
+        if (cloudSessions && cloudSessions.length > 0) {
+          this.sessions = cloudSessions;
+          this.selectChat(this.sessions[0].id);
+        } else {
+          // If new user, migrate current sessions to Firestore
+          await this.authService.saveUserSessions(user.uid, this.sessions);
+        }
+      } else {
+        const savedSessions = localStorage.getItem('veda_sessions');
+        if (savedSessions) {
+          this.sessions = JSON.parse(savedSessions);
+          if (this.sessions.length > 0) {
+            this.selectChat(this.sessions[0].id);
+          } else {
+            this.createNewChat();
+          }
+        } else {
+          this.createNewChat(); 
+        }
+      }
+      this.cdr.detectChanges();
+    });
   }
 
   ngAfterViewChecked() {
@@ -122,6 +161,9 @@ export class AppComponent implements AfterViewChecked, OnInit {
       }
     }
     localStorage.setItem('veda_sessions', JSON.stringify(this.sessions));
+    if (this.currentUser) {
+      this.authService.saveUserSessions(this.currentUser.uid, this.sessions);
+    }
   }
 
   deleteChat(event: Event, id: number) {
@@ -331,9 +373,19 @@ export class AppComponent implements AfterViewChecked, OnInit {
   sendMessage() {
     if (!this.userInput.trim() || this.isLoading) return;
 
+    // Enforce 1-chat limit for unauthenticated guests!
+    if (!this.currentUser) {
+      const userMessageCount = this.messages.filter(m => m.role === 'user').length;
+      if (userMessageCount >= 1) {
+        this.authError = 'You have used your 1 free guest chat! Please sign in to continue chatting and save your history.';
+        this.isAuthModalOpen = true;
+        return;
+      }
+    }
+
     const userText = this.userInput;
     this.messages.push({ role: 'user', text: userText });
-    this.saveChats()
+    this.saveChats();
     this.userInput = ''; 
     this.isLoading = true;
     
@@ -357,7 +409,7 @@ export class AppComponent implements AfterViewChecked, OnInit {
       .subscribe({
         next: (response) => {
           this.messages.push({ role: 'bot', text: response.reply });
-          this.saveChats()
+          this.saveChats();
           this.isLoading = false;
           if (this.isVoiceMode) {
             this.speak(response.reply);
@@ -375,5 +427,71 @@ export class AppComponent implements AfterViewChecked, OnInit {
           this.speak(errorMessage);
         }
       });
+  }
+
+  // --- AUTHENTICATION MODAL CONTROLS ---
+  openAuthModal(mode: 'login' | 'register' = 'login') {
+    this.authMode = mode;
+    this.authError = '';
+    this.authEmail = '';
+    this.authPassword = '';
+    this.authName = '';
+    this.isAuthModalOpen = true;
+  }
+
+  closeAuthModal() {
+    this.isAuthModalOpen = false;
+    this.authError = '';
+  }
+
+  async loginWithGoogle() {
+    this.authLoading = true;
+    this.authError = '';
+    try {
+      await this.authService.loginWithGoogle();
+      this.closeAuthModal();
+    } catch (err: any) {
+      console.error('Google Sign In Error:', err);
+      this.authError = err.message || 'Failed to sign in with Google.';
+    } finally {
+      this.authLoading = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  async submitEmailAuth() {
+    if (!this.authEmail || !this.authPassword) {
+      this.authError = 'Please enter both email and password.';
+      return;
+    }
+    this.authLoading = true;
+    this.authError = '';
+    try {
+      if (this.authMode === 'login') {
+        await this.authService.loginWithEmail(this.authEmail, this.authPassword);
+      } else {
+        await this.authService.registerWithEmail(this.authEmail, this.authPassword, this.authName);
+      }
+      this.closeAuthModal();
+    } catch (err: any) {
+      console.error('Email Auth Error:', err);
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        this.authError = 'Invalid email or password. Please try again.';
+      } else if (err.code === 'auth/email-already-in-use') {
+        this.authError = 'An account with this email already exists. Try signing in.';
+      } else if (err.code === 'auth/weak-password') {
+        this.authError = 'Password should be at least 6 characters long.';
+      } else {
+        this.authError = err.message || 'Authentication failed.';
+      }
+    } finally {
+      this.authLoading = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  async logout() {
+    await this.authService.logout();
+    this.createNewChat();
   }
 }
