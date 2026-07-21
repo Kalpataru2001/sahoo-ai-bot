@@ -2,6 +2,8 @@ import { Component, ElementRef, ViewChild, AfterViewChecked, OnInit, ChangeDetec
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { marked } from 'marked';
 
 interface Message {
   role: 'user' | 'bot';
@@ -46,7 +48,17 @@ export class AppComponent implements AfterViewChecked, OnInit {
     { role: 'bot', text: 'Namaste Sahoo! Voice Mode is ready. Click the big floating mic to try it!' }
   ];
 
-  constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
+  constructor(private http: HttpClient, private cdr: ChangeDetectorRef, private sanitizer: DomSanitizer) {}
+
+  renderMarkdown(text: string): SafeHtml {
+    if (!text) return '';
+    try {
+      const html = marked.parse(text, { breaks: true }) as string;
+      return this.sanitizer.bypassSecurityTrustHtml(html);
+    } catch (e) {
+      return text;
+    }
+  }
 
   ngOnInit() {
     this.initSpeechRecognition(); 
