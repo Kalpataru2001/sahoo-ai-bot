@@ -122,15 +122,18 @@ export class AppComponent implements OnInit {
     });
   }
 
+  showInstructionsBanner = false;
+
   initPwaInstallPrompt() {
-    // Clear legacy permanent dismissal so banner shows up again
+    // Force clear dismissal flags so install prompt is always accessible
     localStorage.removeItem('pwa_banner_dismissed');
+    sessionStorage.removeItem('pwa_banner_dismissed');
 
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 768;
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
     this.isIosDevice = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-    if (isMobile && !isStandalone && !sessionStorage.getItem('pwa_banner_dismissed')) {
+    if (isMobile && !isStandalone) {
       window.addEventListener('beforeinstallprompt', (e: any) => {
         e.preventDefault();
         this.deferredInstallPrompt = e;
@@ -140,12 +143,16 @@ export class AppComponent implements OnInit {
 
       // Mobile fallback prompt
       setTimeout(() => {
-        if (!sessionStorage.getItem('pwa_banner_dismissed')) {
-          this.showInstallBanner = true;
-          this.cdr.detectChanges();
-        }
-      }, 2000);
+        this.showInstallBanner = true;
+        this.cdr.detectChanges();
+      }, 1000);
     }
+  }
+
+  triggerInstallFromSidebar() {
+    this.isSidebarOpen = false;
+    this.showInstallBanner = true;
+    this.installPwa();
   }
 
   async installPwa() {
@@ -159,15 +166,14 @@ export class AppComponent implements OnInit {
     } else if (this.isIosDevice) {
       this.showIosInstructions = true;
     } else {
-      alert('To install, tap your browser menu (⋮) and select "Add to Home screen" or "Install App".');
-      this.dismissInstallBanner();
+      this.showInstructionsBanner = true;
     }
   }
 
   dismissInstallBanner() {
     this.showInstallBanner = false;
     this.showIosInstructions = false;
-    sessionStorage.setItem('pwa_banner_dismissed', 'true');
+    this.showInstructionsBanner = false;
   }
 
   scrollToBottom(): void {

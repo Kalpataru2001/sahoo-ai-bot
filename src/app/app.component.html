@@ -6,6 +6,7 @@
       <button class="close-sidebar-btn" (click)="isSidebarOpen = false">✕</button>
     </div>
     <button class="new-chat-btn" (click)="createNewChat()">+ New Chat</button>
+    <button class="install-app-sidebar-btn" (click)="triggerInstallFromSidebar()">📲 Install Mobile App</button>
 
     <div class="chat-list">
       <div class="chat-item" 
@@ -198,11 +199,12 @@
       </div>
       <div class="banner-text-box">
         <h4>Install AI Companion</h4>
-        <p *ngIf="!showIosInstructions">Add to Home Screen for a faster, native app experience!</p>
+        <p *ngIf="!showIosInstructions && !showInstructionsBanner">Add to Home Screen for a faster, native app experience!</p>
         <p *ngIf="showIosInstructions">Tap <strong>Share</strong> icon below then select <strong>'Add to Home Screen'</strong>.</p>
+        <p *ngIf="showInstructionsBanner">Tap Chrome menu <strong>⋮</strong> at top right &rarr; select <strong>'Add to Home screen'</strong> or <strong>'Install app'</strong>.</p>
       </div>
       <button class="banner-action-btn" (click)="installPwa()">
-        {{ isIosDevice && showIosInstructions ? 'Got it' : 'Install' }}
+        {{ (isIosDevice && showIosInstructions) || showInstructionsBanner ? 'Got it' : 'Install' }}
       </button>
     </div>
   </div>
