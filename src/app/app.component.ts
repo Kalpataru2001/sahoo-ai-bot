@@ -114,8 +114,29 @@ export class AppComponent implements AfterViewChecked, OnInit {
     });
   }
 
+  private shouldAutoScroll = true;
+
   ngAfterViewChecked() {
-    this.scrollToBottom();
+    if (this.shouldAutoScroll) {
+      this.scrollToBottom();
+    }
+  }
+
+  onScroll(event: Event): void {
+    const el = event.target as HTMLElement;
+    if (el) {
+      // If user is within 100px of the bottom, keep auto-scrolling enabled. Otherwise disable it so user can read history!
+      const distanceToBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+      this.shouldAutoScroll = distanceToBottom <= 100;
+    }
+  }
+
+  scrollToBottom(force = false): void {
+    try {
+      if (force || this.shouldAutoScroll) {
+        this.myScrollContainer.nativeElement.scrollTop = this.myScrollContainer.nativeElement.scrollHeight;
+      }
+    } catch(err) { }
   }
   // --- SESSION MANAGEMENT ---
   createNewChat() {
@@ -144,7 +165,9 @@ export class AppComponent implements AfterViewChecked, OnInit {
       this.messages = session.messages;
     }
     this.isSidebarOpen = false; // Auto-close sidebar on mobile after clicking
+    this.shouldAutoScroll = true;
     this.saveChats();
+    setTimeout(() => this.scrollToBottom(true), 50);
   }
 
   saveChats() {
@@ -221,12 +244,6 @@ export class AppComponent implements AfterViewChecked, OnInit {
 
     // 4. Close the modal
     this.cancelDelete();
-  }
-
-  scrollToBottom(): void {
-    try {
-      this.myScrollContainer.nativeElement.scrollTop = this.myScrollContainer.nativeElement.scrollHeight;
-    } catch(err) { }
   }
 
   toggleTheme() {
@@ -385,9 +402,11 @@ export class AppComponent implements AfterViewChecked, OnInit {
 
     const userText = this.userInput;
     this.messages.push({ role: 'user', text: userText });
+    this.shouldAutoScroll = true;
     this.saveChats();
     this.userInput = ''; 
     this.isLoading = true;
+    setTimeout(() => this.scrollToBottom(true), 50);
     
     if (this.isVoiceMode) {
       this.currentVoiceText = 'Thinking...';
@@ -409,8 +428,10 @@ export class AppComponent implements AfterViewChecked, OnInit {
       .subscribe({
         next: (response) => {
           this.messages.push({ role: 'bot', text: response.reply });
+          this.shouldAutoScroll = true;
           this.saveChats();
           this.isLoading = false;
+          setTimeout(() => this.scrollToBottom(true), 50);
           if (this.isVoiceMode) {
             this.speak(response.reply);
           }

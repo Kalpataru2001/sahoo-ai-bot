@@ -67,7 +67,7 @@
         </div>
       </header>
 
-      <div class="chat-box" #scrollMe>
+      <div class="chat-box" #scrollMe (scroll)="onScroll($event)">
         <div *ngFor="let msg of messages" class="message-row"
           [ngClass]="{'user-row': msg.role === 'user', 'bot-row': msg.role === 'bot'}">
           <div class="message-bubble" [ngClass]="msg.role" [innerHTML]="renderMarkdown(msg.text)"></div>
