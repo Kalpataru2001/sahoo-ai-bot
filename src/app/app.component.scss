@@ -55,6 +55,7 @@ html, body {
   }
 
   .install-app-sidebar-btn {
+    display: none; // Hidden by default on desktop
     background: #f0f4f9;
     color: #0084ff;
     border: 1px solid rgba(0, 132, 255, 0.2);
@@ -65,7 +66,6 @@ html, body {
     font-size: 0.9rem;
     margin-bottom: 16px;
     transition: background 0.2s;
-    display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
@@ -174,6 +174,17 @@ header {
     gap: 12px;
     min-width: 0;
     flex-shrink: 1;
+
+    .menu-btn {
+      display: none; // Hidden on desktop
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+      color: inherit;
+    }
 
     .avatar-circle {
       display: flex;
@@ -592,6 +603,10 @@ header {
 // MOBILE RESPONSIVENESS
 // ==========================================
 @media (max-width: 768px) {
+  .install-app-sidebar-btn {
+    display: flex; // Visible on mobile sidebar
+  }
+
   header {
     padding: 10px 12px;
     gap: 8px;
@@ -1224,8 +1239,11 @@ header {
 // Force mobile elements to hide on laptops/desktops
 // ==========================================
 @media (min-width: 769px) {
+  .menu-btn,
+  .install-app-sidebar-btn,
   .mobile-close-header,
-  .sidebar-overlay {
+  .sidebar-overlay,
+  .pwa-mobile-banner {
     display: none !important;
   }
 }

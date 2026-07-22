@@ -125,26 +125,31 @@ export class AppComponent implements OnInit {
   showInstructionsBanner = false;
 
   initPwaInstallPrompt() {
-    // Force clear dismissal flags so install prompt is always accessible
+    // Force clear dismissal flags so install prompt is always accessible on mobile
     localStorage.removeItem('pwa_banner_dismissed');
     sessionStorage.removeItem('pwa_banner_dismissed');
 
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isSmallScreen = window.innerWidth <= 768;
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
     this.isIosDevice = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-    if (isMobile && !isStandalone) {
+    if ((isMobileDevice || isSmallScreen) && !isStandalone) {
       window.addEventListener('beforeinstallprompt', (e: any) => {
         e.preventDefault();
         this.deferredInstallPrompt = e;
-        this.showInstallBanner = true;
-        this.cdr.detectChanges();
+        if (window.innerWidth <= 768) {
+          this.showInstallBanner = true;
+          this.cdr.detectChanges();
+        }
       });
 
       // Mobile fallback prompt
       setTimeout(() => {
-        this.showInstallBanner = true;
-        this.cdr.detectChanges();
+        if (window.innerWidth <= 768) {
+          this.showInstallBanner = true;
+          this.cdr.detectChanges();
+        }
       }, 1000);
     }
   }
