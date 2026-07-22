@@ -456,9 +456,18 @@ export class AppComponent implements OnInit {
   }
 
   handleKeydown(event: KeyboardEvent) {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      this.sendMessage();
+    if (event.key === 'Enter') {
+      const isMobile = window.innerWidth <= 768 || ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+      if (isMobile) {
+        // On mobile keyboards, Enter key (↵) inserts a new line naturally
+        // User taps the blue Send button (✈) to send message
+        return;
+      }
+      if (!event.shiftKey) {
+        // On desktop, Enter sends message, Shift+Enter inserts newline
+        event.preventDefault();
+        this.sendMessage();
+      }
     }
   }
 
