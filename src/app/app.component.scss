@@ -430,6 +430,7 @@ header {
   width: fit-content;
   max-width: 82%;
   min-width: 0;
+  overflow: hidden;
 }
 
 .message-row.user-row .message-content-box {
@@ -438,13 +439,18 @@ header {
 
 .message-row.bot-row .message-content-box {
   align-items: flex-start;
+  // Bot bubbles with code need full container width
+  width: 100%;
+  max-width: 88%;
 }
 
 .message-bubble {
   width: fit-content;
   max-width: 100%;
   min-width: 0;
-  padding: 3px 16px;
+  // Prevent the bubble itself from overflowing its container
+  overflow: hidden;
+  padding: 10px 16px;
   border-radius: 18px;
   font-size: 0.96rem;
   line-height: 1.6;
@@ -467,6 +473,8 @@ header {
     color: white;
     border-bottom-right-radius: 4px;
     font-weight: 500;
+    // User bubbles stay compact
+    width: fit-content;
   }
 
   &.bot {
@@ -474,6 +482,9 @@ header {
     color: #1e293b;
     border: 1px solid #e2e8f0;
     border-bottom-left-radius: 4px;
+    // Bot bubbles with code/markdown expand to fill container
+    width: 100%;
+    box-sizing: border-box;
   }
 
   // --- MARKDOWN TYPOGRAPHY STYLES ---
@@ -496,53 +507,70 @@ header {
   h4 { font-size: 1rem; }
 
   ul, ol {
-    margin: 0.5rem 0 0.8rem 1.4rem;
+    margin: 0.5rem 0 0.8rem 1.3rem;
     padding: 0;
     
     li {
       margin-bottom: 0.4rem;
       padding-left: 0.2rem;
       line-height: 1.6;
+      word-break: break-word;
+      overflow-wrap: anywhere;
       
       &:last-child { margin-bottom: 0; }
       p { margin-bottom: 0.3rem; }
     }
   }
 
+  // Inline code
   code {
     font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Courier New', monospace;
-    font-size: 0.88em;
-    padding: 2px 7px;
-    border-radius: 6px;
-    background: rgba(15, 23, 42, 0.06);
+    font-size: 0.85em;
+    padding: 2px 6px;
+    border-radius: 5px;
+    background: rgba(15, 23, 42, 0.07);
     color: #0284c7;
     font-weight: 600;
-    word-break: break-word;
+    word-break: break-all;
     white-space: pre-wrap;
+    overflow-wrap: anywhere;
   }
 
+  // Block code — scrollable container on mobile
   pre {
-    background: #1e1e2e;
-    color: #f8f8f2;
-    padding: 14px 18px;
+    background: #1a1b2e;
+    color: #e2e8f0;
+    padding: 14px 16px;
     border-radius: 10px;
+    // KEY FIX: enable horizontal scroll instead of overflow
     overflow-x: auto;
+    overflow-y: visible;
+    // Constrain to parent width so it scrolls, not overflows
     max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
     margin: 0.9rem 0;
-    border: 1px solid #313244;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    white-space: pre-wrap;
-    word-break: break-word;
-    overflow-wrap: anywhere;
+    border: 1px solid #2d2f50;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    // Don't wrap code in block — let user scroll horizontally
+    white-space: pre;
+    word-break: normal;
+    overflow-wrap: normal;
+    // Subtle scrollbar styling
+    &::-webkit-scrollbar { height: 5px; }
+    &::-webkit-scrollbar-track { background: #2d2f50; border-radius: 5px; }
+    &::-webkit-scrollbar-thumb { background: #4c4f80; border-radius: 5px; }
 
     code {
       background: transparent;
-      color: inherit;
+      color: #e2e8f0;
       padding: 0;
-      font-size: 0.9rem;
-      font-weight: normal;
-      white-space: pre-wrap;
-      word-break: break-word;
+      font-size: 0.88rem;
+      font-weight: 400;
+      // Match the pre — no wrapping inside code blocks
+      white-space: pre;
+      word-break: normal;
+      overflow-wrap: normal;
     }
   }
 
@@ -994,21 +1022,34 @@ header {
     gap: 12px;
   }
 
-  .message-row {
-    max-width: 100%;
+  .message-content-box {
+    max-width: 94%;
+  }
+
+  .message-row.bot-row .message-content-box {
+    max-width: 96%;
   }
 
   .message-bubble {
-    max-width: 93%;
-    padding: 12px 14px;
+    max-width: 100%;
+    padding: 10px 13px;
     font-size: 0.93rem;
     line-height: 1.55;
 
+    &.bot {
+      width: 100%;
+    }
+
     pre {
+      // Horizontal scrollable code on mobile — text won't be cut off
+      overflow-x: auto;
       padding: 10px 12px;
-      font-size: 0.84rem;
+      font-size: 0.81rem;
       margin: 0.6rem 0;
       border-radius: 8px;
+      white-space: pre;
+      word-break: normal;
+      -webkit-overflow-scrolling: touch; // Smooth momentum scroll on iOS
     }
 
     ul, ol {
