@@ -120,15 +120,17 @@ export class AuthService {
   async saveUserSessions(uid: string, sessions: ChatSession[], currentUser?: User | null): Promise<void> {
     if (!uid) return;
     try {
+      const targetUser = currentUser || this.auth.currentUser;
       const userDocRef = doc(this.db, 'users', uid);
       const updatePayload: any = {
         sessions: sessions,
         updatedAt: new Date().toISOString()
       };
-      if (currentUser) {
-        updatePayload.displayName = this.getUserDisplayName(currentUser);
-        updatePayload.email = currentUser.email || '';
-        updatePayload.photoURL = currentUser.photoURL || '';
+      if (targetUser) {
+        updatePayload.displayName = this.getUserDisplayName(targetUser);
+        updatePayload.email = targetUser.email || '';
+        updatePayload.photoURL = targetUser.photoURL || '';
+        updatePayload.lastLoginAt = new Date().toISOString();
       }
       await setDoc(userDocRef, updatePayload, { merge: true });
     } catch (err) {

@@ -124,10 +124,20 @@ export class AppComponent implements OnInit {
           this.sessions = cloudSessions;
           this.selectChat(this.sessions[0].id);
         } else {
-          // If new user, migrate current sessions to Firestore
+          // If new user, create a clean, private conversation for this user
+          const initialSession: ChatSession = {
+            id: Date.now(),
+            title: 'New Conversation',
+            messages: [
+              { role: 'bot', text: `Namaste ${this.authService.getUserDisplayName(user)}! What is on your mind today?` }
+            ]
+          };
+          this.sessions = [initialSession];
+          this.selectChat(initialSession.id);
           await this.authService.saveUserSessions(user.uid, this.sessions, user);
         }
       } else {
+        this.sessions = [];
         const savedSessions = localStorage.getItem('veda_sessions');
         if (savedSessions) {
           this.sessions = JSON.parse(savedSessions);
@@ -651,6 +661,8 @@ export class AppComponent implements OnInit {
 
   async logout() {
     await this.authService.logout();
+    this.sessions = [];
+    this.currentSessionId = null;
     this.createNewChat();
   }
 }
