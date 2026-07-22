@@ -836,6 +836,12 @@ header {
 // MOBILE RESPONSIVENESS
 // ==========================================
 @media (max-width: 768px) {
+  .sidebar-header {
+    .sidebar-toggle-btn {
+      display: none !important; // Only 1 close button (X) on mobile drawer
+    }
+  }
+
   .install-app-sidebar-btn {
     display: flex; // Visible on mobile sidebar
   }

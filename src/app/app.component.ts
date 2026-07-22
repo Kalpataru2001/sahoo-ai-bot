@@ -35,20 +35,6 @@ export class AppComponent implements OnInit {
   userInput: string = '';
   isLoading = false;
 
-  toggleSidebarCollapse() {
-    this.isSidebarCollapsed = !this.isSidebarCollapsed;
-    if (window.innerWidth <= 768) {
-      this.isSidebarOpen = !this.isSidebarCollapsed;
-    }
-  }
-
-  toggleMobileSidebar() {
-    this.isSidebarOpen = !this.isSidebarOpen;
-    if (this.isSidebarOpen) {
-      this.isSidebarCollapsed = false;
-    }
-  }
-  
   // Auth Variables
   currentUser: User | null = null;
   isAuthModalOpen = false;
@@ -63,7 +49,7 @@ export class AppComponent implements OnInit {
   isVoiceMode = false;
   isRecording = false; 
   botIsSpeaking = false;
-  currentVoiceText = ''; // Shows what the bot/user is currently saying in the overlay
+  currentVoiceText = ''; 
   availableVoices: SpeechSynthesisVoice[] = [];
   isDeleteModalOpen = false;
   chatToDeleteId: number | null = null;
@@ -77,19 +63,37 @@ export class AppComponent implements OnInit {
 
   constructor(
     private http: HttpClient, 
-    private cdr: ChangeDetectorRef, 
+    public cdr: ChangeDetectorRef, 
     private sanitizer: DomSanitizer,
     public authService: AuthService
   ) {}
 
+  // Cache for rendered markdown HTML to prevent DOM node recreation & preserve text selection!
+  private markdownCache = new Map<string, SafeHtml>();
+
   renderMarkdown(text: string): SafeHtml {
     if (!text) return '';
+    if (this.markdownCache.has(text)) {
+      return this.markdownCache.get(text)!;
+    }
     try {
       const html = marked.parse(text, { breaks: true }) as string;
-      return this.sanitizer.bypassSecurityTrustHtml(html);
+      const safe = this.sanitizer.bypassSecurityTrustHtml(html);
+      this.markdownCache.set(text, safe);
+      return safe;
     } catch (e) {
-      return text;
+      const safeFallback = this.sanitizer.bypassSecurityTrustHtml(text);
+      this.markdownCache.set(text, safeFallback);
+      return safeFallback;
     }
+  }
+
+  toggleSidebarCollapse() {
+    this.isSidebarCollapsed = !this.isSidebarCollapsed;
+  }
+
+  toggleMobileSidebar() {
+    this.isSidebarOpen = !this.isSidebarOpen;
   }
 
   // PWA Mobile Banner Variables
