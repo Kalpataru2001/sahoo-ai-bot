@@ -385,12 +385,29 @@ header {
   max-width: 900px;
   min-width: 0;
   margin: 0 auto;
+  user-select: text !important;
+  -webkit-user-select: text !important;
   &.user-row { justify-content: flex-end; }
   &.bot-row { justify-content: flex-start; }
 }
 
+.message-content-box {
+  display: flex;
+  flex-direction: column;
+  max-width: 85%;
+  min-width: 0;
+}
+
+.message-row.user-row .message-content-box {
+  align-items: flex-end;
+}
+
+.message-row.bot-row .message-content-box {
+  align-items: flex-start;
+}
+
 .message-bubble {
-  max-width: 82%;
+  width: 100%;
   min-width: 0;
   padding: 14px 20px;
   border-radius: 18px;
@@ -400,6 +417,15 @@ header {
   overflow-wrap: anywhere;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
   transition: all 0.2s ease;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+
+  * {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+  }
 
   &.user {
     background: linear-gradient(135deg, #0084ff, #00c6ff);
@@ -511,6 +537,37 @@ header {
 
   em {
     font-style: italic;
+  }
+}
+
+.message-actions {
+  display: flex;
+  margin-top: 4px;
+  padding: 0 4px;
+
+  .copy-msg-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+
+    &:hover {
+      color: #0084ff;
+      background: rgba(0, 132, 255, 0.08);
+    }
+
+    .copied-badge {
+      color: #10b981;
+      font-weight: 700;
+    }
   }
 }
 
@@ -710,6 +767,19 @@ header {
   .chat-box {
     background: #0f172a;
     &::-webkit-scrollbar-thumb { background: #334155; }
+  }
+
+  .message-actions {
+    .copy-msg-btn {
+      color: #64748b;
+      &:hover {
+        color: #38bdf8;
+        background: rgba(56, 189, 248, 0.12);
+      }
+      .copied-badge {
+        color: #34d399;
+      }
+    }
   }
   
   .message-bubble.bot {

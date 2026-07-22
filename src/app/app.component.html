@@ -93,9 +93,25 @@
       </header>
 
       <div class="chat-box" #scrollMe>
-        <div *ngFor="let msg of messages" class="message-row"
+        <div *ngFor="let msg of messages; let i = index" class="message-row"
           [ngClass]="{'user-row': msg.role === 'user', 'bot-row': msg.role === 'bot'}">
-          <div class="message-bubble" [ngClass]="msg.role" [innerHTML]="renderMarkdown(msg.text)"></div>
+          <div class="message-content-box">
+            <div class="message-bubble" [ngClass]="msg.role" [innerHTML]="renderMarkdown(msg.text)"></div>
+            <div class="message-actions">
+              <button class="copy-msg-btn" (click)="copyMessageText(msg.text, i)" [title]="copiedMsgIndex === i ? 'Copied to Clipboard!' : 'Copy text'">
+                <ng-container *ngIf="copiedMsgIndex === i; else copyIcon">
+                  <span class="copied-badge">✓ Copied</span>
+                </ng-container>
+                <ng-template #copyIcon>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <span>Copy</span>
+                </ng-template>
+              </button>
+            </div>
+          </div>
         </div>
 
         <div class="message-row bot-row" *ngIf="isLoading">

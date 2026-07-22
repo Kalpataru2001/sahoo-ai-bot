@@ -563,6 +563,43 @@ export class AppComponent implements OnInit {
     }
   }
 
+  // --- COPY TEXT FUNCTIONALITY ---
+  copiedMsgIndex: number | null = null;
+
+  copyMessageText(text: string, index: number) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        this.copiedMsgIndex = index;
+        this.cdr.detectChanges();
+        setTimeout(() => {
+          this.copiedMsgIndex = null;
+          this.cdr.detectChanges();
+        }, 2000);
+      }).catch(() => this.fallbackCopyText(text, index));
+    } else {
+      this.fallbackCopyText(text, index);
+    }
+  }
+
+  private fallbackCopyText(text: string, index: number) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      this.copiedMsgIndex = index;
+      this.cdr.detectChanges();
+      setTimeout(() => {
+        this.copiedMsgIndex = null;
+        this.cdr.detectChanges();
+      }, 2000);
+    } catch (err) { }
+    document.body.removeChild(textarea);
+  }
+
   async logout() {
     await this.authService.logout();
     this.createNewChat();
