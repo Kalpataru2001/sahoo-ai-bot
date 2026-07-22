@@ -27,3 +27,92 @@ pre, code, pre *, code * {
   background-color: #0084ff !important;
   color: #ffffff !important;
 }
+
+/* ==========================================================
+   GLOBAL MARKDOWN CODE BLOCK STYLES (bypasses Angular encapsulation)
+   These apply to <pre><code> injected via [innerHTML] from marked.js
+   ========================================================== */
+
+/* Desktop: horizontal scroll for code blocks */
+.message-bubble pre {
+  background: #1a1b2e;
+  color: #e2e8f0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  overflow-x: auto;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0.8rem 0;
+  border: 1px solid #2d2f50;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  /* Desktop: preserve newlines, allow horizontal scroll */
+  white-space: pre;
+  word-break: normal;
+  overflow-wrap: normal;
+  /* Custom scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #4c4f80 #2d2f50;
+}
+
+.message-bubble pre::-webkit-scrollbar {
+  height: 5px;
+}
+.message-bubble pre::-webkit-scrollbar-track {
+  background: #2d2f50;
+  border-radius: 5px;
+}
+.message-bubble pre::-webkit-scrollbar-thumb {
+  background: #4c4f80;
+  border-radius: 5px;
+}
+
+.message-bubble pre code {
+  background: transparent;
+  color: #e2e8f0;
+  padding: 0;
+  font-size: 0.88rem;
+  font-weight: 400;
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Courier New', monospace;
+  white-space: pre;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+/* Inline code (not inside pre) */
+.message-bubble code:not(pre code) {
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Courier New', monospace;
+  font-size: 0.85em;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(15, 23, 42, 0.08);
+  color: #0284c7;
+  font-weight: 600;
+  word-break: break-word;
+  white-space: normal;
+}
+
+/* ==========================================================
+   MOBILE: wrap code — most reliable approach on mobile browsers
+   overflow-x:hidden on parent containers blocks child horizontal scroll
+   ========================================================== */
+@media (max-width: 768px) {
+  .message-bubble pre {
+    padding: 10px 12px;
+    font-size: 0.80rem;
+    margin: 0.6rem 0;
+    border-radius: 8px;
+    /* CRITICAL: wrap code on mobile so nothing is cut off */
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+    overflow-wrap: break-word !important;
+    overflow-x: visible !important;
+  }
+
+  .message-bubble pre code {
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+    overflow-wrap: break-word !important;
+    font-size: 0.79rem;
+  }
+}

@@ -528,8 +528,9 @@ header {
     }
   }
 
-  // Inline code
-  code {
+  // Inline code — global styles.scss handles pre/code blocks inside innerHTML
+  // Only keep the inline code style here for non-innerHTML code elements
+  code:not(pre code) {
     font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Courier New', monospace;
     font-size: 0.85em;
     padding: 2px 6px;
@@ -537,48 +538,8 @@ header {
     background: rgba(15, 23, 42, 0.07);
     color: #0284c7;
     font-weight: 600;
-    word-break: break-all;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
   }
 
-  // Block code — scrollable container on mobile
-  pre {
-    background: #1a1b2e;
-    color: #e2e8f0;
-    padding: 14px 16px;
-    border-radius: 10px;
-    // KEY FIX: enable horizontal scroll instead of overflow
-    overflow-x: auto;
-    overflow-y: visible;
-    // Constrain to parent width so it scrolls, not overflows
-    max-width: 100%;
-    width: 100%;
-    box-sizing: border-box;
-    margin: 0.9rem 0;
-    border: 1px solid #2d2f50;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    // Don't wrap code in block — let user scroll horizontally
-    white-space: pre;
-    word-break: normal;
-    overflow-wrap: normal;
-    // Subtle scrollbar styling
-    &::-webkit-scrollbar { height: 5px; }
-    &::-webkit-scrollbar-track { background: #2d2f50; border-radius: 5px; }
-    &::-webkit-scrollbar-thumb { background: #4c4f80; border-radius: 5px; }
-
-    code {
-      background: transparent;
-      color: #e2e8f0;
-      padding: 0;
-      font-size: 0.88rem;
-      font-weight: 400;
-      // Match the pre — no wrapping inside code blocks
-      white-space: pre;
-      word-break: normal;
-      overflow-wrap: normal;
-    }
-  }
 
   blockquote {
     border-left: 4px solid #0284c7;
@@ -1044,25 +1005,6 @@ header {
 
     &.bot {
       width: 100%;
-    }
-
-    pre {
-      padding: 10px 12px;
-      font-size: 0.80rem;
-      margin: 0.6rem 0;
-      border-radius: 8px;
-      // On mobile: wrap code at container edge — more reliable than horizontal scroll
-      // which gets blocked by parent overflow:hidden on mobile browsers
-      white-space: pre-wrap !important;
-      word-break: break-all !important;
-      overflow-wrap: break-word !important;
-      overflow-x: visible !important;
-
-      code {
-        white-space: pre-wrap !important;
-        word-break: break-all !important;
-        overflow-wrap: break-word !important;
-      }
     }
 
     ul, ol {
