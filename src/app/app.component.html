@@ -62,8 +62,8 @@
     <div class="chat-container">
       <header>
         <div class="header-info">
-          <button class="menu-btn" (click)="isSidebarOpen = !isSidebarOpen">☰</button>
-          <button class="expand-sidebar-header-btn" *ngIf="isSidebarCollapsed" (click)="toggleSidebarCollapse()" title="Expand Sidebar">
+          <button class="menu-btn" (click)="toggleMobileSidebar()" title="Toggle Menu">☰</button>
+          <button class="expand-sidebar-header-btn" *ngIf="isSidebarCollapsed || !isSidebarOpen" (click)="toggleSidebarCollapse()" title="Expand Sidebar">
             ❯
           </button>
           <div class="avatar-circle">

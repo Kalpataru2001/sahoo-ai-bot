@@ -37,6 +37,16 @@ export class AppComponent implements OnInit {
 
   toggleSidebarCollapse() {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
+    if (window.innerWidth <= 768) {
+      this.isSidebarOpen = !this.isSidebarCollapsed;
+    }
+  }
+
+  toggleMobileSidebar() {
+    this.isSidebarOpen = !this.isSidebarOpen;
+    if (this.isSidebarOpen) {
+      this.isSidebarCollapsed = false;
+    }
   }
   
   // Auth Variables
