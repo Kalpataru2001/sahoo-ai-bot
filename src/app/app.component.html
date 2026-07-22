@@ -44,7 +44,7 @@
           <span *ngIf="!currentUser.photoURL">{{ (currentUser.displayName || currentUser.email || 'U')[0].toUpperCase() }}</span>
         </div>
         <div class="user-info-text">
-          <span class="user-name">{{ currentUser.displayName || 'User' }}</span>
+          <span class="user-name">{{ authService.getUserDisplayName(currentUser) }}</span>
           <span class="user-email">{{ currentUser.email }}</span>
         </div>
         <button class="logout-icon-btn" (click)="logout()" title="Sign Out">🚪</button>
@@ -79,7 +79,7 @@
           <ng-container *ngIf="currentUser; else guestHeader">
             <div class="user-pill">
               <img *ngIf="currentUser.photoURL" [src]="currentUser.photoURL" class="user-photo" />
-              <span class="user-name-pill">{{ currentUser.displayName || currentUser.email }}</span>
+              <span class="user-name-pill">{{ authService.getUserDisplayName(currentUser) }}</span>
               <button class="signout-btn-pill" (click)="logout()">Sign Out</button>
             </div>
           </ng-container>

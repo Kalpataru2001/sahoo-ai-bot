@@ -15,9 +15,7 @@ import {
   getFirestore, 
   doc, 
   setDoc, 
-  getDoc, 
-  collection, 
-  getDocs 
+  getDoc 
 } from 'firebase/firestore';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -46,7 +44,10 @@ export class AuthService {
   public authInitialized = false;
 
   constructor() {
-    onAuthStateChanged(this.auth, (user) => {
+    onAuthStateChanged(this.auth, async (user) => {
+      if (user) {
+        await this.saveUserProfile(user);
+      }
       this.currentUserSubject.next(user);
       this.authInitialized = true;
     });
@@ -56,21 +57,57 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
+  getUserDisplayName(user: { displayName?: string | null; email?: string | null } | null): string {
+    if (!user) return 'User';
+    if (user.displayName && user.displayName.trim()) {
+      return user.displayName;
+    }
+    if (user.email) {
+      const username = user.email.split('@')[0];
+      return username.charAt(0).toUpperCase() + username.slice(1);
+    }
+    return 'User';
+  }
+
+  async saveUserProfile(user: User): Promise<void> {
+    if (!user || !user.uid) return;
+    try {
+      const name = this.getUserDisplayName(user);
+      const userDocRef = doc(this.db, 'users', user.uid);
+      await setDoc(userDocRef, {
+        displayName: name,
+        email: user.email || '',
+        photoURL: user.photoURL || '',
+        lastLoginAt: new Date().toISOString()
+      }, { merge: true });
+    } catch (err) {
+      console.error('Error saving user profile to Firestore:', err);
+    }
+  }
+
   async loginWithGoogle(): Promise<User> {
     const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(this.auth, provider);
+    if (result.user) {
+      await this.saveUserProfile(result.user);
+    }
     return result.user;
   }
 
   async loginWithEmail(email: string, pass: string): Promise<User> {
     const result = await signInWithEmailAndPassword(this.auth, email, pass);
+    if (result.user) {
+      await this.saveUserProfile(result.user);
+    }
     return result.user;
   }
 
   async registerWithEmail(email: string, pass: string, name?: string): Promise<User> {
     const result = await createUserWithEmailAndPassword(this.auth, email, pass);
-    if (name && result.user) {
-      await updateProfile(result.user, { displayName: name });
+    const finalName = name || this.getUserDisplayName({ email });
+    if (result.user) {
+      await updateProfile(result.user, { displayName: finalName });
+      await this.saveUserProfile(result.user);
     }
     return result.user;
   }
@@ -80,14 +117,20 @@ export class AuthService {
   }
 
   // --- FIRESTORE USER CHAT PERSISTENCE ---
-  async saveUserSessions(uid: string, sessions: ChatSession[]): Promise<void> {
+  async saveUserSessions(uid: string, sessions: ChatSession[], currentUser?: User | null): Promise<void> {
     if (!uid) return;
     try {
       const userDocRef = doc(this.db, 'users', uid);
-      await setDoc(userDocRef, { 
-        sessions: sessions, 
-        updatedAt: new Date().toISOString() 
-      }, { merge: true });
+      const updatePayload: any = {
+        sessions: sessions,
+        updatedAt: new Date().toISOString()
+      };
+      if (currentUser) {
+        updatePayload.displayName = this.getUserDisplayName(currentUser);
+        updatePayload.email = currentUser.email || '';
+        updatePayload.photoURL = currentUser.photoURL || '';
+      }
+      await setDoc(userDocRef, updatePayload, { merge: true });
     } catch (err) {
       console.error('Error saving user sessions to Firestore:', err);
     }

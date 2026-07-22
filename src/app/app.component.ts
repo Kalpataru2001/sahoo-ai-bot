@@ -122,7 +122,7 @@ export class AppComponent implements OnInit {
           this.selectChat(this.sessions[0].id);
         } else {
           // If new user, migrate current sessions to Firestore
-          await this.authService.saveUserSessions(user.uid, this.sessions);
+          await this.authService.saveUserSessions(user.uid, this.sessions, user);
         }
       } else {
         const savedSessions = localStorage.getItem('veda_sessions');
@@ -253,7 +253,7 @@ export class AppComponent implements OnInit {
     }
     localStorage.setItem('veda_sessions', JSON.stringify(this.sessions));
     if (this.currentUser) {
-      this.authService.saveUserSessions(this.currentUser.uid, this.sessions);
+      this.authService.saveUserSessions(this.currentUser.uid, this.sessions, this.currentUser);
     }
   }
 
