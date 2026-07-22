@@ -765,8 +765,19 @@ header {
   header {
     background: #1e1e1e;
     border-color: #333;
-    .menu-btn, .title h2, .icon-btn { color: #fff; }
+    .title h2, .icon-btn { color: #fff; }
     .avatar-circle { background: #333; }
+
+    .menu-btn {
+      background: rgba(56, 189, 248, 0.18);
+      border-color: rgba(56, 189, 248, 0.4);
+      color: #38bdf8;
+
+      &:hover, &:active {
+        background: #38bdf8;
+        color: #0f172a;
+      }
+    }
 
     .expand-sidebar-header-btn {
       background: #2a3749;
@@ -877,8 +888,27 @@ header {
     }
 
     .menu-btn { 
-      display: block; // Show hamburger icon on phones
-      font-size: 1.4rem;
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(0, 132, 255, 0.12);
+      border: 1px solid rgba(0, 132, 255, 0.3);
+      color: #0084ff;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+
+      &:hover, &:active {
+        background: #0084ff;
+        color: #ffffff;
+      }
     }
 
     .avatar-circle {
