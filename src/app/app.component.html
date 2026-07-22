@@ -1,19 +1,35 @@
 <div class="app-layout" [class.dark-mode]="isDarkMode">
   <div class="sidebar-overlay" *ngIf="isSidebarOpen" (click)="isSidebarOpen = false"></div>
   
-  <aside class="sidebar" [class.open]="isSidebarOpen">
+  <aside class="sidebar" [class.open]="isSidebarOpen" [class.collapsed]="isSidebarCollapsed">
     <div class="mobile-close-header">
       <button class="close-sidebar-btn" (click)="isSidebarOpen = false">✕</button>
     </div>
-    <button class="new-chat-btn" (click)="createNewChat()">+ New Chat</button>
-    <button class="install-app-sidebar-btn" (click)="triggerInstallFromSidebar()">📲 Install Mobile App</button>
+
+    <!-- SIDEBAR ACTION HEADER -->
+    <div class="sidebar-header">
+      <button class="new-chat-btn" (click)="createNewChat()" [title]="isSidebarCollapsed ? 'New Chat' : ''">
+        <span class="btn-icon">+</span>
+        <span class="btn-text">New Chat</span>
+      </button>
+      <button class="sidebar-toggle-btn" (click)="toggleSidebarCollapse()" [title]="isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'">
+        {{ isSidebarCollapsed ? '❯' : '❮' }}
+      </button>
+    </div>
+
+    <button class="install-app-sidebar-btn" (click)="triggerInstallFromSidebar()" [title]="isSidebarCollapsed ? 'Install Mobile App' : ''">
+      <span class="btn-icon">📲</span>
+      <span class="btn-text">Install Mobile App</span>
+    </button>
 
     <div class="chat-list">
       <div class="chat-item" 
            *ngFor="let session of sessions" 
            [class.active]="session.id === currentSessionId"
-           (click)="selectChat(session.id)">
+           (click)="selectChat(session.id)"
+           [title]="session.title">
            
+        <span class="chat-icon">💬</span>
         <span class="chat-title">{{ session.title }}</span>
         
         <button class="delete-btn" (click)="openDeleteModal($event, session.id)" title="Delete Chat">✕</button>
@@ -23,7 +39,7 @@
     <!-- SIDEBAR USER PROFILE FOOTER -->
     <div class="user-profile-sidebar">
       <ng-container *ngIf="currentUser; else guestSidebar">
-        <div class="user-avatar-small">
+        <div class="user-avatar-small" [title]="currentUser.displayName || currentUser.email || 'User'">
           <img *ngIf="currentUser.photoURL" [src]="currentUser.photoURL" alt="User Avatar" />
           <span *ngIf="!currentUser.photoURL">{{ (currentUser.displayName || currentUser.email || 'U')[0].toUpperCase() }}</span>
         </div>
@@ -34,7 +50,10 @@
         <button class="logout-icon-btn" (click)="logout()" title="Sign Out">🚪</button>
       </ng-container>
       <ng-template #guestSidebar>
-        <button class="auth-btn-sidebar" (click)="openAuthModal('login')">🔑 Sign In / Register</button>
+        <button class="auth-btn-sidebar" (click)="openAuthModal('login')" [title]="isSidebarCollapsed ? 'Sign In / Register' : ''">
+          <span class="btn-icon">🔑</span>
+          <span class="btn-text">Sign In / Register</span>
+        </button>
       </ng-template>
     </div>
   </aside>
@@ -44,6 +63,9 @@
       <header>
         <div class="header-info">
           <button class="menu-btn" (click)="isSidebarOpen = !isSidebarOpen">☰</button>
+          <button class="expand-sidebar-header-btn" *ngIf="isSidebarCollapsed" (click)="toggleSidebarCollapse()" title="Expand Sidebar">
+            ❯
+          </button>
           <div class="avatar-circle">
             <img src="app-icon.jpg" class="app-icon-img" alt="AI Companion Icon">
           </div>

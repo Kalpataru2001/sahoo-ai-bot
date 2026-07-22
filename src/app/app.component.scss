@@ -35,23 +35,61 @@ html, body {
   border-right: 1px solid #e0e0e0;
   display: flex;
   flex-direction: column;
-  padding: 20px;
-  transition: transform 0.3s ease, background-color 0.3s;
+  padding: 20px 16px;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease, background-color 0.3s;
   z-index: 1000;
+  overflow-x: hidden;
 
-  .new-chat-btn {
-    background: linear-gradient(135deg, #0084ff, #00c6ff);
-    color: white;
-    border: none;
-    padding: 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 1rem;
-    margin-bottom: 10px;
-    transition: opacity 0.2s;
-    
-    &:hover { opacity: 0.9; }
+  .sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    width: 100%;
+
+    .new-chat-btn {
+      flex: 1;
+      background: linear-gradient(135deg, #0084ff, #00c6ff);
+      color: white;
+      border: none;
+      padding: 11px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: opacity 0.2s, transform 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      white-space: nowrap;
+      
+      &:hover { opacity: 0.92; transform: translateY(-1px); }
+      &:active { transform: translateY(0); }
+    }
+
+    .sidebar-toggle-btn {
+      background: #e2e8f0;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
+
+      &:hover {
+        background: #0084ff;
+        color: white;
+        border-color: #0084ff;
+      }
+    }
   }
 
   .install-app-sidebar-btn {
@@ -89,12 +127,17 @@ html, body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 15px;
-    border-radius: 8px;
+    padding: 12px 14px;
+    border-radius: 10px;
     cursor: pointer;
     background: transparent;
     color: #444;
     transition: background-color 0.2s, color 0.2s;
+    gap: 8px;
+
+    .chat-icon {
+      display: none; // Hidden in expanded state
+    }
 
     .chat-title {
       flex: 1;
@@ -129,6 +172,79 @@ html, body {
       
       .delete-btn { opacity: 1; color: #0084ff; } // Keep X visible on active chat
       .delete-btn:hover { color: #ff4d4f; }
+    }
+  }
+
+  // ==========================================
+  // COLLAPSED SIDEBAR STATE (DESKTOP SLIM RAIL)
+  // ==========================================
+  &.collapsed {
+    width: 68px;
+    padding: 16px 8px;
+
+    .sidebar-header {
+      flex-direction: column;
+      gap: 12px;
+
+      .new-chat-btn {
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border-radius: 12px;
+        justify-content: center;
+
+        .btn-text { display: none; }
+        .btn-icon { font-size: 1.4rem; font-weight: bold; margin: 0; }
+      }
+
+      .sidebar-toggle-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+      }
+    }
+
+    .install-app-sidebar-btn {
+      padding: 8px 0;
+      justify-content: center;
+      .btn-text { display: none; }
+    }
+
+    .chat-list {
+      gap: 10px;
+    }
+
+    .chat-item {
+      padding: 12px 0;
+      justify-content: center;
+      border-left: none !important;
+      border-radius: 12px;
+
+      .chat-icon { display: block; font-size: 1.2rem; }
+      .chat-title, .delete-btn { display: none; }
+
+      &.active {
+        background: rgba(0, 132, 255, 0.2);
+        color: #0084ff;
+      }
+    }
+
+    .user-profile-sidebar {
+      padding: 10px 0;
+      justify-content: center;
+
+      .user-info-text, .logout-icon-btn { display: none; }
+
+      .auth-btn-sidebar {
+        padding: 10px 0;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        margin: 0 auto;
+
+        .btn-text { display: none; }
+      }
     }
   }
 }
@@ -184,6 +300,29 @@ header {
       padding: 4px;
       line-height: 1;
       color: inherit;
+    }
+
+    .expand-sidebar-header-btn {
+      background: #e2e8f0;
+      border: 1px solid #cbd5e1;
+      color: #0084ff;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s, color 0.2s, transform 0.15s;
+
+      &:hover {
+        background: #0084ff;
+        color: white;
+        border-color: #0084ff;
+      }
     }
 
     .avatar-circle {
@@ -528,6 +667,18 @@ header {
     background-color: #1e1e1e;
     border-color: #333;
     
+    .sidebar-toggle-btn {
+      background: #2a3749;
+      border-color: #334155;
+      color: #94a3b8;
+
+      &:hover {
+        background: #38bdf8;
+        color: #0f172a;
+        border-color: #38bdf8;
+      }
+    }
+
     .chat-item { 
       color: #e0e0e0; 
       &:hover { background: rgba(255,255,255,0.05); }
@@ -541,6 +692,18 @@ header {
     border-color: #333;
     .menu-btn, .title h2, .icon-btn { color: #fff; }
     .avatar-circle { background: #333; }
+
+    .expand-sidebar-header-btn {
+      background: #2a3749;
+      border-color: #334155;
+      color: #38bdf8;
+
+      &:hover {
+        background: #38bdf8;
+        color: #0f172a;
+        border-color: #38bdf8;
+      }
+    }
   }
 
   // Dark Chat Box

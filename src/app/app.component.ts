@@ -30,9 +30,14 @@ export class AppComponent implements OnInit {
   sessions: ChatSession[] = [];
   currentSessionId: number | null = null;
   isSidebarOpen = false; // For mobile phones
+  isSidebarCollapsed = false; // For desktop collapse toggle
   isDarkMode = true;
   userInput: string = '';
   isLoading = false;
+
+  toggleSidebarCollapse() {
+    this.isSidebarCollapsed = !this.isSidebarCollapsed;
+  }
   
   // Auth Variables
   currentUser: User | null = null;
