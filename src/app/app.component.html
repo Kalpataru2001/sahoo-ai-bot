@@ -36,6 +36,12 @@
       </div>
     </div>
 
+    <!-- SIDEBAR SETTINGS BUTTON -->
+    <button class="settings-btn-sidebar" (click)="openSettingsModal()" [title]="isSidebarCollapsed ? 'Settings & Preferences' : ''">
+      <span class="btn-icon">⚙️</span>
+      <span class="btn-text">Settings & Preferences</span>
+    </button>
+
     <!-- SIDEBAR USER PROFILE FOOTER -->
     <div class="user-profile-sidebar">
       <ng-container *ngIf="currentUser; else guestSidebar">
@@ -247,6 +253,57 @@
       <button class="banner-action-btn" (click)="installPwa()">
         {{ (isIosDevice && showIosInstructions) || showInstructionsBanner ? 'Got it' : 'Install' }}
       </button>
+    </div>
+  </div>
+
+  <!-- SETTINGS / PREFERENCES MODAL -->
+  <div class="modal-overlay" *ngIf="isSettingsModalOpen" (click)="closeSettingsModal()">
+    <div class="modal-card settings-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>⚙️ User Preferences & Settings</h3>
+        <button class="close-btn" (click)="closeSettingsModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-subtitle">Personalize how AI Companion talks to you and tailors responses to your background.</p>
+
+        <div class="form-group">
+          <label for="callingName">Preferred Calling Name</label>
+          <input id="callingName" type="text" [(ngModel)]="userPrefs.callingName" placeholder="e.g. Sahoo, Kalpa, Jerry" />
+          <small class="field-hint">The name the AI will use to address you.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="occupation">Occupation / Role</label>
+          <input id="occupation" type="text" [(ngModel)]="userPrefs.occupation" placeholder="e.g. Software Engineer, Student, Designer" />
+          <small class="field-hint">Helps the AI give relevant examples for your field.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="aiTone">Preferred AI Response Tone</label>
+          <select id="aiTone" [(ngModel)]="userPrefs.tone">
+            <option value="Friendly & Casual">Friendly & Casual 😊</option>
+            <option value="Professional & Detailed">Professional & Detailed 💼</option>
+            <option value="Concise & Direct">Concise & Direct ⚡</option>
+            <option value="Teacher & Mentor">Teacher & Mentor 🎓</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="interests">Additional Details / Custom Instructions</label>
+          <textarea id="interests" [(ngModel)]="userPrefs.interests" rows="3" placeholder="e.g. Prefer C# and TypeScript code, explain simply, keep answers brief..."></textarea>
+          <small class="field-hint">Any specific instructions or preferences for the AI.</small>
+        </div>
+
+        <div class="success-alert" *ngIf="settingsSavedMsg">
+          ✓ Preferences saved successfully!
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="cancel-btn" (click)="closeSettingsModal()">Cancel</button>
+        <button class="save-btn" (click)="saveSettings()">Save Preferences</button>
+      </div>
     </div>
   </div>
 </div>

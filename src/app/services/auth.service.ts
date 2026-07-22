@@ -31,6 +31,13 @@ export interface ChatSession {
   messages: ChatMessage[];
 }
 
+export interface UserPreferences {
+  callingName?: string;
+  occupation?: string;
+  tone?: string;
+  interests?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -148,6 +155,34 @@ export class AuthService {
       }
     } catch (err) {
       console.error('Error fetching user sessions from Firestore:', err);
+    }
+    return null;
+  }
+
+  // --- FIRESTORE USER PREFERENCES PERSISTENCE ---
+  async saveUserPreferences(uid: string, prefs: UserPreferences): Promise<void> {
+    if (!uid) return;
+    try {
+      const userDocRef = doc(this.db, 'users', uid);
+      await setDoc(userDocRef, {
+        preferences: prefs,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch (err) {
+      console.error('Error saving user preferences to Firestore:', err);
+    }
+  }
+
+  async getUserPreferences(uid: string): Promise<UserPreferences | null> {
+    if (!uid) return null;
+    try {
+      const userDocRef = doc(this.db, 'users', uid);
+      const docSnap = await getDoc(userDocRef);
+      if (docSnap.exists() && docSnap.data()['preferences']) {
+        return docSnap.data()['preferences'] as UserPreferences;
+      }
+    } catch (err) {
+      console.error('Error fetching user preferences from Firestore:', err);
     }
     return null;
   }

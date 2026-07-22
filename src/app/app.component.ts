@@ -5,7 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { marked } from 'marked';
 import { User } from 'firebase/auth';
-import { AuthService } from './services/auth.service';
+import { AuthService, UserPreferences } from './services/auth.service';
 
 interface Message {
   role: 'user' | 'bot';
@@ -61,14 +61,74 @@ export class AppComponent implements OnInit {
     { role: 'bot', text: 'Namaste! Voice Mode is ready. Click the big floating mic to try it!' }
   ];
 
+  // --- USER PREFERENCES / SETTINGS ---
+  isSettingsModalOpen = false;
+  settingsSavedMsg = false;
+  userPrefs: UserPreferences = {
+    callingName: '',
+    occupation: '',
+    tone: 'Friendly & Casual',
+    interests: ''
+  };
+
   getUserFullName(): string {
     return this.authService.getUserDisplayName(this.currentUser);
   }
 
   getUserFirstName(): string {
+    if (this.userPrefs.callingName && this.userPrefs.callingName.trim()) {
+      return this.userPrefs.callingName.trim();
+    }
     const fullName = this.getUserFullName();
     if (!fullName || fullName === 'User') return 'Sahoo';
     return fullName.split(' ')[0];
+  }
+
+  async loadUserPreferences(user?: User | null) {
+    const targetUser = user !== undefined ? user : this.currentUser;
+    if (targetUser) {
+      const cloudPrefs = await this.authService.getUserPreferences(targetUser.uid);
+      if (cloudPrefs) {
+        this.userPrefs = { ...cloudPrefs };
+        this.cdr.detectChanges();
+        return;
+      }
+    }
+    const local = localStorage.getItem('ai_companion_user_prefs');
+    if (local) {
+      try {
+        this.userPrefs = JSON.parse(local);
+      } catch (e) { }
+    }
+  }
+
+  async openSettingsModal() {
+    await this.loadUserPreferences();
+    if (!this.userPrefs.callingName && this.currentUser) {
+      this.userPrefs.callingName = this.authService.getUserDisplayName(this.currentUser);
+    }
+    this.settingsSavedMsg = false;
+    this.isSettingsModalOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  closeSettingsModal() {
+    this.isSettingsModalOpen = false;
+    this.settingsSavedMsg = false;
+  }
+
+  async saveSettings() {
+    localStorage.setItem('ai_companion_user_prefs', JSON.stringify(this.userPrefs));
+    if (this.currentUser) {
+      await this.authService.saveUserPreferences(this.currentUser.uid, this.userPrefs);
+    }
+    this.settingsSavedMsg = true;
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      this.settingsSavedMsg = false;
+      this.isSettingsModalOpen = false;
+      this.cdr.detectChanges();
+    }, 1200);
   }
 
   constructor(
@@ -124,6 +184,7 @@ export class AppComponent implements OnInit {
     // Firebase Auth State Listener
     this.authService.currentUser$.subscribe(async (user) => {
       this.currentUser = user;
+      await this.loadUserPreferences(user);
       if (user) {
         // Guarantee user metadata (displayName, email, photoURL) is saved in Firestore document
         await this.authService.saveUserProfile(user);
