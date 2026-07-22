@@ -58,8 +58,18 @@ export class AppComponent implements OnInit {
   indianVoice: SpeechSynthesisVoice | null = null;
   
   messages: Message[] = [
-    { role: 'bot', text: 'Namaste Sahoo! Voice Mode is ready. Click the big floating mic to try it!' }
+    { role: 'bot', text: 'Namaste! Voice Mode is ready. Click the big floating mic to try it!' }
   ];
+
+  getUserFullName(): string {
+    return this.authService.getUserDisplayName(this.currentUser);
+  }
+
+  getUserFirstName(): string {
+    const fullName = this.getUserFullName();
+    if (!fullName || fullName === 'User') return 'Sahoo';
+    return fullName.split(' ')[0];
+  }
 
   constructor(
     private http: HttpClient, 
@@ -223,10 +233,11 @@ export class AppComponent implements OnInit {
   // --- SESSION MANAGEMENT ---
   createNewChat() {
     const newId = Date.now();
+    const userName = this.getUserFirstName();
     const newSession: ChatSession = {
       id: newId,
       title: 'New Conversation',
-      messages: [{ role: 'bot', text: 'Namaste Sahoo! What is on your mind?' }]
+      messages: [{ role: 'bot', text: `Namaste ${userName}! What is on your mind?` }]
     };
     
     // Add to the top of the list
@@ -524,6 +535,9 @@ export class AppComponent implements OnInit {
       this.currentVoiceText = 'Thinking...';
     }
 
+    const userName = this.getUserFirstName();
+    const userFullName = this.getUserFullName();
+
     let geminiHistory = this.messages
       .filter(m => m.text !== 'Backend is sleeping!' && m.text !== 'Connection Error.')
       .slice(0, -1) 
@@ -536,7 +550,14 @@ export class AppComponent implements OnInit {
       geminiHistory.shift();
     }
 
-    this.http.post<{reply: string}>('https://sahoo-ai-proxy-us.onrender.com/api/chat', { message: userText ,history: geminiHistory})
+    this.http.post<{reply: string}>('https://sahoo-ai-proxy-us.onrender.com/api/chat', { 
+      message: userText,
+      history: geminiHistory,
+      userName: userName,
+      userFirstName: userName,
+      userFullName: userFullName,
+      systemContext: `The user's name is ${userName}. Address them as ${userName} naturally in conversation when appropriate.`
+    })
       .subscribe({
         next: (response) => {
           this.messages.push({ role: 'bot', text: response.reply });

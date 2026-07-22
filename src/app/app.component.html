@@ -124,7 +124,7 @@
             [(ngModel)]="userInput" 
             (keydown)="handleKeydown($event)" 
             (input)="autoResizeTextarea($event)"
-            placeholder="Type a message Sahoo..."
+            [placeholder]="'Type a message ' + getUserFirstName() + '...'"
             rows="1"
             [disabled]="isRecording">
           </textarea>
