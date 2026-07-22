@@ -115,6 +115,9 @@ export class AppComponent implements OnInit {
     this.authService.currentUser$.subscribe(async (user) => {
       this.currentUser = user;
       if (user) {
+        // Guarantee user metadata (displayName, email, photoURL) is saved in Firestore document
+        await this.authService.saveUserProfile(user);
+
         // Fetch User's Firestore Sessions
         const cloudSessions = await this.authService.getUserSessions(user.uid);
         if (cloudSessions && cloudSessions.length > 0) {
