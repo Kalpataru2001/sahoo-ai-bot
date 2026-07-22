@@ -455,6 +455,21 @@ export class AppComponent implements OnInit {
     window.speechSynthesis.speak(utterance);
   }
 
+  handleKeydown(event: KeyboardEvent) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      this.sendMessage();
+    }
+  }
+
+  autoResizeTextarea(event: Event) {
+    const textarea = event.target as HTMLTextAreaElement;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 140) + 'px';
+    }
+  }
+
   sendMessage() {
     if (!this.userInput.trim() || this.isLoading) return;
 
@@ -473,7 +488,15 @@ export class AppComponent implements OnInit {
     this.saveChats();
     this.userInput = ''; 
     this.isLoading = true;
-    setTimeout(() => this.scrollToBottom(), 60);
+    
+    // Reset textarea height after sending
+    setTimeout(() => {
+      const textarea = document.querySelector('.input-wrapper textarea') as HTMLTextAreaElement;
+      if (textarea) {
+        textarea.style.height = 'auto';
+      }
+      this.scrollToBottom();
+    }, 60);
     
     if (this.isVoiceMode) {
       this.currentVoiceText = 'Thinking...';

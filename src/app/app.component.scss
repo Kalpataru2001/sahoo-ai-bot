@@ -394,7 +394,8 @@ header {
 .message-content-box {
   display: flex;
   flex-direction: column;
-  max-width: 85%;
+  width: fit-content;
+  max-width: 82%;
   min-width: 0;
 }
 
@@ -407,15 +408,16 @@ header {
 }
 
 .message-bubble {
-  width: 100%;
+  width: fit-content;
+  max-width: 100%;
   min-width: 0;
-  padding: 14px 20px;
+  padding: 10px 16px;
   border-radius: 18px;
-  font-size: 0.98rem;
-  line-height: 1.65;
+  font-size: 0.96rem;
+  line-height: 1.6;
   word-break: break-word;
   overflow-wrap: anywhere;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   transition: all 0.2s ease;
   user-select: text !important;
   -webkit-user-select: text !important;
@@ -590,7 +592,7 @@ header {
 
 // --- INPUT AREA ---
 .input-area {
-  padding: 15px 20px;
+  padding: 12px 18px;
   background: #ffffff;
   border-top: 1px solid #e0e0e0;
   transition: background 0.3s, border-color 0.3s;
@@ -599,19 +601,34 @@ header {
     display: flex;
     gap: 10px;
     background: #f0f2f5;
-    padding: 8px 15px;
-    border-radius: 25px;
-    align-items: center;
-    transition: background 0.3s;
+    padding: 8px 14px;
+    border-radius: 24px;
+    align-items: flex-end;
+    transition: background 0.3s, border-color 0.2s;
+    border: 1px solid transparent;
 
-    input {
+    &:focus-within {
+      background: #ffffff;
+      border-color: #0084ff;
+      box-shadow: 0 0 0 3px rgba(0, 132, 255, 0.12);
+    }
+
+    textarea {
       flex: 1;
       background: transparent;
       border: none;
       outline: none;
-      font-size: 1rem;
-      padding: 5px;
+      font-size: 0.96rem;
+      padding: 4px 2px;
       color: #333;
+      resize: none;
+      max-height: 140px;
+      line-height: 1.5;
+      font-family: inherit;
+
+      &::placeholder {
+        color: #94a3b8;
+      }
     }
 
     .send-btn {
@@ -619,12 +636,13 @@ header {
       color: white;
       border: none;
       border-radius: 50%;
-      width: 40px;
-      height: 40px;
+      width: 38px;
+      height: 38px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
+      flex-shrink: 0;
       transition: background 0.2s, transform 0.1s;
       
       &:disabled { background: #ccc; cursor: not-allowed; }
@@ -821,7 +839,11 @@ header {
     border-color: #333;
     .input-wrapper {
       background: #2a2a2a;
-      input { color: #fff; }
+      textarea { color: #fff; &::placeholder { color: #888; } }
+      &:focus-within {
+        background: #181818;
+        border-color: #38bdf8;
+      }
     }
   }
 
