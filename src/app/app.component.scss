@@ -316,6 +316,11 @@ header {
   transition: background 0.3s, border-color 0.3s;
   min-width: 0;
   width: 100%;
+  // FIXED: always stays at top, never scrolls with content
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 
   .header-info {
     display: flex;
@@ -430,7 +435,6 @@ header {
   width: fit-content;
   max-width: 82%;
   min-width: 0;
-  overflow: hidden;
 }
 
 .message-row.user-row .message-content-box {
@@ -448,8 +452,6 @@ header {
   width: fit-content;
   max-width: 100%;
   min-width: 0;
-  // Prevent the bubble itself from overflowing its container
-  overflow: hidden;
   padding: 10px 16px;
   border-radius: 18px;
   font-size: 0.96rem;
@@ -485,6 +487,8 @@ header {
     // Bot bubbles with code/markdown expand to fill container
     width: 100%;
     box-sizing: border-box;
+    // Allow pre blocks to overflow-x scroll without being clipped
+    overflow: visible;
   }
 
   // --- MARKDOWN TYPOGRAPHY STYLES ---
