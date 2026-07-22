@@ -1,1 +1,29 @@
 /* You can add global styles to this file, and also import other style files */
+
+/* GLOBAL TEXT SELECTION & TOUCH HIGHLIGHT ENFORCEMENT */
+html, body, app-root, .app-layout, .chat-main, .chat-box, .message-row, .message-content-box, .message-bubble, .message-bubble * {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+  -webkit-touch-callout: default !important;
+}
+
+/* Allow text selection in code snippets & pre blocks */
+pre, code, pre *, code * {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+  -webkit-touch-callout: default !important;
+}
+
+::selection {
+  background-color: #0084ff !important;
+  color: #ffffff !important;
+}
+
+::-moz-selection {
+  background-color: #0084ff !important;
+  color: #ffffff !important;
+}
