@@ -5,7 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { marked } from 'marked';
 import { User } from 'firebase/auth';
-import { AuthService, UserPreferences } from './services/auth.service';
+import { AuthService, UserPreferences, UserMemory } from './services/auth.service';
 
 interface Message {
   role: 'user' | 'bot';
@@ -70,8 +70,9 @@ export class AppComponent implements OnInit {
     { role: 'bot', text: 'Namaste! Voice Mode is ready. Click the big floating mic to try it!' }
   ];
 
-  // --- USER PREFERENCES / SETTINGS ---
+  // --- USER PREFERENCES / SETTINGS & MEMORY ---
   isSettingsModalOpen = false;
+  activeSettingsTab: 'preferences' | 'memories' = 'preferences';
   settingsSavedMsg = false;
   userPrefs: UserPreferences = {
     callingName: '',
@@ -79,6 +80,8 @@ export class AppComponent implements OnInit {
     tone: 'Friendly & Casual',
     interests: ''
   };
+  userMemories: UserMemory[] = [];
+  isExtractingMemories = false;
 
   getUserFullName(): string {
     return this.authService.getUserDisplayName(this.currentUser);
@@ -99,14 +102,21 @@ export class AppComponent implements OnInit {
       const cloudPrefs = await this.authService.getUserPreferences(targetUser.uid);
       if (cloudPrefs) {
         this.userPrefs = { ...cloudPrefs };
-        this.cdr.detectChanges();
-        return;
       }
+      this.userMemories = await this.authService.getMemories(targetUser.uid);
+      this.cdr.detectChanges();
+      return;
     }
     const local = localStorage.getItem('ai_companion_user_prefs');
     if (local) {
       try {
         this.userPrefs = JSON.parse(local);
+      } catch (e) { }
+    }
+    const localMemories = localStorage.getItem('ai_companion_user_memories');
+    if (localMemories) {
+      try {
+        this.userMemories = JSON.parse(localMemories);
       } catch (e) { }
     }
   }
@@ -116,6 +126,7 @@ export class AppComponent implements OnInit {
     if (!this.userPrefs.callingName && this.currentUser) {
       this.userPrefs.callingName = this.authService.getUserDisplayName(this.currentUser);
     }
+    this.activeSettingsTab = 'preferences';
     this.settingsSavedMsg = false;
     this.isSettingsModalOpen = true;
     this.cdr.detectChanges();
@@ -138,6 +149,62 @@ export class AppComponent implements OnInit {
       this.isSettingsModalOpen = false;
       this.cdr.detectChanges();
     }, 1200);
+  }
+
+  async deleteMemoryItem(memoryId: string) {
+    if (this.currentUser) {
+      this.userMemories = await this.authService.deleteMemory(this.currentUser.uid, memoryId);
+    } else {
+      this.userMemories = this.userMemories.filter(m => m.id !== memoryId);
+      localStorage.setItem('ai_companion_user_memories', JSON.stringify(this.userMemories));
+    }
+    this.cdr.detectChanges();
+  }
+
+  async clearAllMemories() {
+    if (confirm('Are you sure you want to clear all stored memories about you?')) {
+      if (this.currentUser) {
+        await this.authService.clearAllMemories(this.currentUser.uid);
+        this.userMemories = [];
+      } else {
+        this.userMemories = [];
+        localStorage.removeItem('ai_companion_user_memories');
+      }
+      this.cdr.detectChanges();
+    }
+  }
+
+  private extractMemoriesFromConversation(conversationSnippet: string) {
+    if (!conversationSnippet || conversationSnippet.trim().length < 15) return;
+    this.isExtractingMemories = true;
+    const existingFactTexts = this.userMemories.map(m => m.fact);
+
+    this.http.post<{ memories: string[] }>('https://sahoo-ai-proxy-us.onrender.com/api/extract-memories', {
+      conversation: conversationSnippet,
+      existingMemories: existingFactTexts
+    }).subscribe({
+      next: async (res) => {
+        this.isExtractingMemories = false;
+        if (res && res.memories && res.memories.length > 0) {
+          if (this.currentUser) {
+            this.userMemories = await this.authService.addMemories(this.currentUser.uid, res.memories);
+          } else {
+            const newMems: UserMemory[] = res.memories.map(fact => ({
+              id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+              fact,
+              addedAt: new Date().toISOString(),
+              source: 'auto'
+            }));
+            this.userMemories = [...this.userMemories, ...newMems].slice(-50);
+            localStorage.setItem('ai_companion_user_memories', JSON.stringify(this.userMemories));
+          }
+          this.cdr.detectChanges();
+        }
+      },
+      error: () => {
+        this.isExtractingMemories = false;
+      }
+    });
   }
 
   constructor(
@@ -622,12 +689,17 @@ export class AppComponent implements OnInit {
       geminiHistory.shift();
     }
 
+    const memoryFacts = this.userMemories.map(m => m.fact);
+
     this.http.post<{reply: string}>('https://sahoo-ai-proxy-us.onrender.com/api/chat', { 
       message: userText,
       history: geminiHistory,
-      userName: userName,
+      userName: this.userPrefs.callingName || userName,
       userFirstName: userName,
       userFullName: userFullName,
+      occupation: this.userPrefs.occupation || '',
+      tone: this.userPrefs.tone || 'friendly',
+      memories: memoryFacts,
       systemContext: `The user's name is ${userName}. Address them as ${userName} naturally in conversation when appropriate.`
     })
       .subscribe({
@@ -639,6 +711,10 @@ export class AppComponent implements OnInit {
           if (this.isVoiceMode) {
             this.speak(response.reply);
           }
+
+          // Trigger automatic memory extraction from the last exchange
+          const snippet = `User: ${userText}\nAI: ${response.reply}`;
+          this.extractMemoriesFromConversation(snippet);
         },
         error: (err) => {
           const errorMessage = err.error?.error || 'My backend seems to be sleeping!';

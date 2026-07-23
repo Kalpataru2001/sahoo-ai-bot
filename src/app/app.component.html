@@ -280,11 +280,21 @@
   <div class="modal-overlay" *ngIf="isSettingsModalOpen" (click)="closeSettingsModal()">
     <div class="modal-card settings-modal" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>⚙️ User Preferences & Settings</h3>
+        <h3>⚙️ Settings & Memory</h3>
         <button class="close-btn" (click)="closeSettingsModal()">✕</button>
       </div>
 
-      <div class="modal-body">
+      <!-- Settings Tab Nav -->
+      <div class="settings-tabs">
+        <button class="tab-btn" [class.active]="activeSettingsTab === 'preferences'" (click)="activeSettingsTab = 'preferences'">
+          👤 Preferences
+        </button>
+        <button class="tab-btn" [class.active]="activeSettingsTab === 'memories'" (click)="activeSettingsTab = 'memories'">
+          🧠 Memories ({{ userMemories.length }})
+        </button>
+      </div>
+
+      <div class="modal-body" *ngIf="activeSettingsTab === 'preferences'">
         <p class="modal-subtitle">Personalize how AI Companion talks to you and tailors responses to your background.</p>
 
         <div class="form-group">
@@ -317,6 +327,33 @@
 
         <div class="success-alert" *ngIf="settingsSavedMsg">
           ✓ Preferences saved successfully!
+        </div>
+      </div>
+
+      <!-- MEMORIES TAB -->
+      <div class="modal-body memories-tab-body" *ngIf="activeSettingsTab === 'memories'">
+        <p class="modal-subtitle">What AI Companion automatically remembers about you from your conversations.</p>
+
+        <div class="memory-status-badge" *ngIf="isExtractingMemories">
+          <span class="pulse-dot"></span> Learning new details from chat...
+        </div>
+
+        <div class="empty-memories" *ngIf="userMemories.length === 0">
+          <div class="empty-icon">🧠</div>
+          <p>No memories stored yet!</p>
+          <small>As you chat, the AI will naturally remember key details about your job, hobbies, skills, and preferences.</small>
+        </div>
+
+        <div class="memories-list" *ngIf="userMemories.length > 0">
+          <div class="memory-card" *ngFor="let m of userMemories">
+            <span class="memory-bullet">💡</span>
+            <span class="memory-fact">{{ m.fact }}</span>
+            <button class="delete-mem-btn" (click)="deleteMemoryItem(m.id)" title="Forget this memory">✕</button>
+          </div>
+        </div>
+
+        <div class="clear-memories-wrapper" *ngIf="userMemories.length > 0">
+          <button class="clear-mem-btn" (click)="clearAllMemories()">🗑️ Clear All Memories</button>
         </div>
       </div>
 

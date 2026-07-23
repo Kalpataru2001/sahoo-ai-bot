@@ -40,6 +40,13 @@ export interface UserPreferences {
   interests?: string;
 }
 
+export interface UserMemory {
+  id: string;        // unique ID for deletion
+  fact: string;      // e.g. "User is a software engineer"
+  addedAt: string;   // ISO date
+  source: 'auto' | 'manual';
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -187,6 +194,80 @@ export class AuthService {
       console.error('Error fetching user preferences from Firestore:', err);
     }
     return null;
+  }
+
+  // --- LONG-TERM MEMORY (cross-session facts about user) ---
+  async addMemories(uid: string, newFacts: string[]): Promise<UserMemory[]> {
+    if (!uid || !newFacts.length) return [];
+    try {
+      const userDocRef = doc(this.db, 'users', uid);
+      const docSnap = await getDoc(userDocRef);
+      const existing: UserMemory[] = docSnap.exists() && docSnap.data()['memories']
+        ? (docSnap.data()['memories'] as UserMemory[])
+        : [];
+
+      // Deduplicate — skip facts that are already stored (loose match)
+      const existingFacts = existing.map(m => m.fact.toLowerCase());
+      const toAdd = newFacts.filter(f => {
+        const fl = f.toLowerCase();
+        return !existingFacts.some(ef => ef.includes(fl.substring(0, 20)) || fl.includes(ef.substring(0, 20)));
+      });
+
+      const newMemories: UserMemory[] = toAdd.map(fact => ({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        fact,
+        addedAt: new Date().toISOString(),
+        source: 'auto'
+      }));
+
+      // Keep max 50 memories (drop oldest first)
+      const combined = [...existing, ...newMemories].slice(-50);
+      await setDoc(userDocRef, { memories: combined }, { merge: true });
+      return combined;
+    } catch (err) {
+      console.error('Error saving memories:', err);
+      return [];
+    }
+  }
+
+  async getMemories(uid: string): Promise<UserMemory[]> {
+    if (!uid) return [];
+    try {
+      const userDocRef = doc(this.db, 'users', uid);
+      const docSnap = await getDoc(userDocRef);
+      if (docSnap.exists() && docSnap.data()['memories']) {
+        return docSnap.data()['memories'] as UserMemory[];
+      }
+    } catch (err) {
+      console.error('Error fetching memories:', err);
+    }
+    return [];
+  }
+
+  async deleteMemory(uid: string, memoryId: string): Promise<UserMemory[]> {
+    if (!uid) return [];
+    try {
+      const userDocRef = doc(this.db, 'users', uid);
+      const docSnap = await getDoc(userDocRef);
+      if (!docSnap.exists()) return [];
+      const existing: UserMemory[] = docSnap.data()['memories'] || [];
+      const updated = existing.filter(m => m.id !== memoryId);
+      await setDoc(userDocRef, { memories: updated }, { merge: true });
+      return updated;
+    } catch (err) {
+      console.error('Error deleting memory:', err);
+      return [];
+    }
+  }
+
+  async clearAllMemories(uid: string): Promise<void> {
+    if (!uid) return;
+    try {
+      const userDocRef = doc(this.db, 'users', uid);
+      await setDoc(userDocRef, { memories: [] }, { merge: true });
+    } catch (err) {
+      console.error('Error clearing memories:', err);
+    }
   }
 
   // --- SHARED CHAT (PUBLIC SHARING) ---

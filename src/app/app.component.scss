@@ -1577,6 +1577,135 @@ header {
     }
   }
 
+  // Settings Tab Navigation
+  .settings-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 8px;
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+      }
+
+      &.active {
+        background: rgba(0, 132, 255, 0.1);
+        color: #0084ff;
+      }
+    }
+  }
+
+  // Memories Tab Body
+  .memories-tab-body {
+    max-height: 380px;
+    overflow-y: auto;
+
+    .memory-status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: #0084ff;
+      font-weight: 600;
+      margin-bottom: 10px;
+
+      .pulse-dot {
+        width: 8px;
+        height: 8px;
+        background-color: #0084ff;
+        border-radius: 50%;
+        animation: pulse 1.2s infinite;
+      }
+    }
+
+    .empty-memories {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 30px 16px;
+      gap: 8px;
+
+      .empty-icon { font-size: 2.5rem; }
+      p { font-size: 0.95rem; font-weight: 600; color: #475569; margin: 0; }
+      small { font-size: 0.8rem; color: #94a3b8; max-width: 320px; }
+    }
+
+    .memories-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .memory-card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 9px 12px;
+        border-radius: 10px;
+        font-size: 0.88rem;
+        color: #1e293b;
+        transition: background 0.2s;
+
+        .memory-bullet { font-size: 0.9rem; flex-shrink: 0; }
+        .memory-fact { flex: 1; line-height: 1.4; word-break: break-word; }
+
+        .delete-mem-btn {
+          background: transparent;
+          border: none;
+          color: #94a3b8;
+          cursor: pointer;
+          font-size: 0.9rem;
+          padding: 2px 6px;
+          border-radius: 4px;
+          transition: color 0.2s, background 0.2s;
+
+          &:hover {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+          }
+        }
+      }
+    }
+
+    .clear-memories-wrapper {
+      margin-top: 14px;
+      display: flex;
+      justify-content: center;
+
+      .clear-mem-btn {
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        padding: 7px 14px;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover {
+          background: #ef4444;
+          color: white;
+        }
+      }
+    }
+  }
+
   .modal-footer {
     display: flex;
     justify-content: flex-end;
@@ -1605,6 +1734,12 @@ header {
       &:hover { transform: scale(1.02); opacity: 0.95; }
     }
   }
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.7; }
 }
 
 // Dark Mode Support for Modal
