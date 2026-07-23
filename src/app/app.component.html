@@ -331,4 +331,53 @@
   <div class="share-toast" [class.visible]="showShareToast" aria-live="polite">
     <span>{{ shareToastMsg }}</span>
   </div>
+
+  <!-- SHARED CHAT VIEWER OVERLAY (shown when opening a ?share=ID link) -->
+  <div class="shared-chat-overlay" *ngIf="isSharedChatView">
+    <div class="shared-chat-modal">
+      <!-- Loading State -->
+      <div class="shared-loading" *ngIf="sharedChatLoading">
+        <div class="shared-spinner"></div>
+        <p>Loading shared conversation...</p>
+      </div>
+
+      <!-- Not Found -->
+      <div class="shared-not-found" *ngIf="!sharedChatLoading && !sharedChatData">
+        <div class="shared-not-found-icon">🔍</div>
+        <h3>Chat Not Found</h3>
+        <p>This shared conversation may have expired or the link is invalid.</p>
+        <button class="shared-close-btn" (click)="closeSharedChatView()">Go to AI Companion</button>
+      </div>
+
+      <!-- Shared Chat Content -->
+      <div class="shared-chat-content" *ngIf="!sharedChatLoading && sharedChatData">
+        <div class="shared-chat-header">
+          <div class="shared-chat-meta">
+            <div class="shared-avatar">🤖</div>
+            <div class="shared-info">
+              <h2>{{ sharedChatData.title }}</h2>
+              <p class="shared-by">Shared by <strong>{{ sharedChatData.sharedByName }}</strong></p>
+            </div>
+          </div>
+          <div class="shared-header-actions">
+            <button class="use-app-btn" (click)="closeSharedChatView()">💬 Start Your Own Chat</button>
+            <button class="shared-close-x" (click)="closeSharedChatView()" title="Close">✕</button>
+          </div>
+        </div>
+
+        <div class="shared-messages">
+          <div *ngFor="let msg of sharedChatData.messages"
+               class="shared-msg-row"
+               [ngClass]="msg.role === 'user' ? 'shared-user-row' : 'shared-bot-row'">
+            <div class="shared-bubble" [ngClass]="msg.role" [innerHTML]="renderMarkdown(msg.text)"></div>
+          </div>
+        </div>
+
+        <div class="shared-footer">
+          <p>🤖 Powered by <strong>AI Companion</strong></p>
+          <button class="use-app-btn" (click)="closeSharedChatView()">Start Chatting Free →</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

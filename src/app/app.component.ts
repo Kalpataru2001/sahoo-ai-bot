@@ -49,6 +49,11 @@ export class AppComponent implements OnInit {
   showShareToast = false;
   shareToastMsg = '';
 
+  // Shared Chat Viewer (when someone opens a ?share=ID link)
+  isSharedChatView = false;
+  sharedChatData: { title: string; messages: any[]; sharedByName: string; createdAt: string } | null = null;
+  sharedChatLoading = false;
+
   // Voice Mode Variables
   isVoiceMode = false;
   isRecording = false; 
@@ -180,6 +185,8 @@ export class AppComponent implements OnInit {
     this.initSpeechRecognition(); 
     this.loadVoices();
     this.initPwaInstallPrompt();
+    // Check if this is a shared chat link (?share=ID)
+    this.checkSharedChatOnLoad();
 
     window.speechSynthesis.onvoiceschanged = () => {
       this.loadVoices();
@@ -756,46 +763,68 @@ export class AppComponent implements OnInit {
     }, 2500);
   }
 
+  private copyToClipboard(text: string) {
+    try {
+      navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+  }
+
   async shareChat() {
-    const url = window.location.href;
-    const sessionTitle = this.sessions.find(s => s.id === this.currentSessionId)?.title || 'AI Companion Chat';
-    const title = `AI Companion — ${sessionTitle}`;
-    const text = `Check out this conversation on AI Companion! 🤖`;
+    const session = this.sessions.find(s => s.id === this.currentSessionId);
+    const sessionTitle = session?.title || 'AI Companion Chat';
+    const messages = this.messages;
+
+    if (!messages || messages.length === 0) {
+      this.showShareToastMsg('⚠️ No messages to share yet');
+      return;
+    }
+
+    this.showShareToastMsg('⏳ Creating share link...');
+
+    // Save chat to Firestore shared_chats collection
+    const sharedByName = this.getUserFullName() || 'AI Companion User';
+    const shareId = await this.authService.createSharedChat(sessionTitle, messages, sharedByName);
+
+    if (!shareId) {
+      this.showShareToastMsg('⚠️ Could not create share link');
+      return;
+    }
+
+    // Build the shareable URL with ?share=ID
+    const baseUrl = window.location.origin + window.location.pathname;
+    const shareUrl = `${baseUrl}?share=${shareId}`;
+    const shareTitle = `AI Companion — ${sessionTitle}`;
+    const shareText = `Check out this AI conversation shared by ${sharedByName} 🤖`;
 
     if (navigator.share) {
       // Mobile: open native OS share sheet
       try {
-        await navigator.share({ title, text, url });
+        await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
       } catch (err: any) {
         if (err?.name !== 'AbortError') {
-          // Only show error if user didn't just cancel
           this.showShareToastMsg('⚠️ Could not share');
         }
       }
     } else {
-      // Desktop: copy link to clipboard
-      try {
-        await navigator.clipboard.writeText(url);
-        this.showShareToastMsg('🔗 Link copied to clipboard!');
-      } catch {
-        // Fallback for older browsers
-        const ta = document.createElement('textarea');
-        ta.value = url;
-        ta.style.position = 'fixed';
-        ta.style.opacity = '0';
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-        this.showShareToastMsg('🔗 Link copied to clipboard!');
-      }
+      // Desktop: copy the real shareable link
+      this.copyToClipboard(shareUrl);
+      this.showShareToastMsg('🔗 Share link copied! Anyone can open it.');
     }
   }
 
   async shareMessage(text: string) {
     const url = window.location.href;
     const title = 'AI Companion';
-    const shareText = text.length > 300 ? text.substring(0, 297) + '...' : text;
+    const shareText = text.length > 280 ? text.substring(0, 277) + '...' : text;
 
     if (navigator.share) {
       try {
@@ -806,21 +835,38 @@ export class AppComponent implements OnInit {
         }
       }
     } else {
-      try {
-        await navigator.clipboard.writeText(text);
-        this.showShareToastMsg('📋 Message copied to clipboard!');
-      } catch {
-        const ta = document.createElement('textarea');
-        ta.value = text;
-        ta.style.position = 'fixed';
-        ta.style.opacity = '0';
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-        this.showShareToastMsg('📋 Message copied to clipboard!');
-      }
+      this.copyToClipboard(text);
+      this.showShareToastMsg('📋 Message copied to clipboard!');
     }
+  }
+
+  // Check URL for ?share=ID and load shared chat
+  async checkSharedChatOnLoad() {
+    const params = new URLSearchParams(window.location.search);
+    const shareId = params.get('share');
+    if (!shareId) return;
+
+    this.sharedChatLoading = true;
+    this.isSharedChatView = true;
+    this.cdr.detectChanges();
+
+    const data = await this.authService.getSharedChat(shareId);
+    if (data) {
+      this.sharedChatData = data;
+    } else {
+      this.sharedChatData = null;
+    }
+    this.sharedChatLoading = false;
+    this.cdr.detectChanges();
+  }
+
+  closeSharedChatView() {
+    this.isSharedChatView = false;
+    this.sharedChatData = null;
+    // Remove ?share= param from URL without page reload
+    const url = new URL(window.location.href);
+    url.searchParams.delete('share');
+    window.history.replaceState({}, '', url.toString());
   }
 
   async logout() {

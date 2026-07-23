@@ -15,7 +15,9 @@ import {
   getFirestore, 
   doc, 
   setDoc, 
-  getDoc 
+  getDoc,
+  collection,
+  addDoc
 } from 'firebase/firestore';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -183,6 +185,44 @@ export class AuthService {
       }
     } catch (err) {
       console.error('Error fetching user preferences from Firestore:', err);
+    }
+    return null;
+  }
+
+  // --- SHARED CHAT (PUBLIC SHARING) ---
+  async createSharedChat(title: string, messages: ChatMessage[], sharedByName: string): Promise<string | null> {
+    try {
+      const sharedChatsRef = collection(this.db, 'shared_chats');
+      const docRef = await addDoc(sharedChatsRef, {
+        title,
+        messages,
+        sharedByName,
+        createdAt: new Date().toISOString(),
+        // Auto-expire after 30 days (informational — enforce with Firestore TTL policy)
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      });
+      return docRef.id;
+    } catch (err) {
+      console.error('Error creating shared chat:', err);
+      return null;
+    }
+  }
+
+  async getSharedChat(shareId: string): Promise<{ title: string; messages: ChatMessage[]; sharedByName: string; createdAt: string } | null> {
+    try {
+      const sharedDocRef = doc(this.db, 'shared_chats', shareId);
+      const docSnap = await getDoc(sharedDocRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        return {
+          title: data['title'] || 'Shared Chat',
+          messages: data['messages'] || [],
+          sharedByName: data['sharedByName'] || 'Someone',
+          createdAt: data['createdAt'] || ''
+        };
+      }
+    } catch (err) {
+      console.error('Error fetching shared chat:', err);
     }
     return null;
   }
