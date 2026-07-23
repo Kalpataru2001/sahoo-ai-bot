@@ -195,8 +195,24 @@ export class AppComponent implements OnInit {
     }
   }
 
-  private extractMemoriesFromConversation(conversationSnippet: string) {
+  private extractMemoriesFromConversation(conversationSnippet: string, userText: string) {
     if (!conversationSnippet || conversationSnippet.trim().length < 15) return;
+
+    // Smart Intent Filter: Only call memory extraction if userText contains personal statement keywords!
+    // This prevents burning 50% of Gemini API quota on general questions like "what is LSP" or "how to fix bug".
+    const lowerText = userText.toLowerCase();
+    const personalKeywords = [
+      'i am', 'i work', 'i live', 'i love', 'i like', 'my name', 'i prefer', 
+      'i use', 'i study', 'i built', 'my job', 'my hobby', 'my favorite', 
+      'i\'m', 'my name is', 'mera', 'meri', 'mujhe', 'rehta', 'pasand', 'kam karta',
+      'i have', 'i want', 'i plan', 'my email', 'my location', 'i feel', 'i hate'
+    ];
+    const isPersonalStatement = personalKeywords.some(kw => lowerText.includes(kw));
+
+    if (!isPersonalStatement) {
+      return; // Skip memory extraction call for general questions
+    }
+
     this.isExtractingMemories = true;
     const existingFactTexts = this.userMemories.map(m => m.fact);
 
@@ -733,9 +749,9 @@ export class AppComponent implements OnInit {
             this.speak(response.reply);
           }
 
-          // Trigger automatic memory extraction from the last exchange
+          // Trigger automatic memory extraction from the last exchange (filtered for personal statements)
           const snippet = `User: ${userText}\nAI: ${response.reply}`;
-          this.extractMemoriesFromConversation(snippet);
+          this.extractMemoriesFromConversation(snippet, userText);
         },
         error: (err) => {
           const errorMessage = err.error?.error || 'My backend seems to be sleeping!';
