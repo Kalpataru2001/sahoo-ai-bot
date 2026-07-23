@@ -79,6 +79,15 @@
         </div>
 
         <div class="header-actions">
+          <button class="icon-btn share-btn" (click)="shareChat()" title="Share this chat">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+          </button>
           <button class="icon-btn theme-toggle" (click)="toggleTheme()" title="Toggle Theme">
             {{ isDarkMode ? '☀️' : '🌙' }}
           </button>
@@ -112,6 +121,17 @@
                   </svg>
                   <span>Copy</span>
                 </ng-template>
+              </button>
+              <!-- Share button — only for bot messages -->
+              <button class="share-msg-btn" *ngIf="msg.role === 'bot'" (click)="shareMessage(msg.text)" title="Share this message">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="18" cy="5" r="3"></circle>
+                  <circle cx="6" cy="12" r="3"></circle>
+                  <circle cx="18" cy="19" r="3"></circle>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+                <span>Share</span>
               </button>
             </div>
           </div>
@@ -305,5 +325,10 @@
         <button class="save-btn" (click)="saveSettings()">Save Preferences</button>
       </div>
     </div>
+  </div>
+
+  <!-- SHARE TOAST NOTIFICATION -->
+  <div class="share-toast" [class.visible]="showShareToast" aria-live="polite">
+    <span>{{ shareToastMsg }}</span>
   </div>
 </div>

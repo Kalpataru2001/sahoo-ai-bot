@@ -572,10 +572,12 @@ header {
 
 .message-actions {
   display: flex;
+  align-items: center;
+  gap: 2px;
   margin-top: 4px;
   padding: 0 4px;
 
-  .copy-msg-btn {
+  .copy-msg-btn, .share-msg-btn {
     background: transparent;
     border: none;
     color: #94a3b8;
@@ -599,7 +601,69 @@ header {
       font-weight: 700;
     }
   }
+
+  .share-msg-btn {
+    &:hover {
+      color: #7c3aed;
+      background: rgba(124, 58, 237, 0.08);
+    }
+  }
 }
+
+// --- SHARE BUTTON IN HEADER ---
+.share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  svg { display: block; }
+
+  &:hover {
+    background: rgba(124, 58, 237, 0.1);
+    border-color: rgba(124, 58, 237, 0.25);
+    color: #7c3aed;
+    transform: scale(1.08);
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+// --- SHARE TOAST NOTIFICATION ---
+.share-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  color: #f8fafc;
+  padding: 12px 22px;
+  border-radius: 50px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255,255,255,0.06);
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+
+  &.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
 
 .typing-indicator span {
   display: inline-block;
@@ -827,7 +891,7 @@ header {
   }
 
   .message-actions {
-    .copy-msg-btn {
+    .copy-msg-btn, .share-msg-btn {
       color: #64748b;
       &:hover {
         color: #38bdf8;
@@ -836,6 +900,19 @@ header {
       .copied-badge {
         color: #34d399;
       }
+    }
+    .share-msg-btn:hover {
+      color: #a78bfa;
+      background: rgba(167, 139, 250, 0.12);
+    }
+  }
+
+  .share-btn {
+    color: #64748b;
+    &:hover {
+      background: rgba(167, 139, 250, 0.15);
+      border-color: rgba(167, 139, 250, 0.3);
+      color: #a78bfa;
     }
   }
   

@@ -45,6 +45,10 @@ export class AppComponent implements OnInit {
   authError = '';
   authLoading = false;
 
+  // Share Feature
+  showShareToast = false;
+  shareToastMsg = '';
+
   // Voice Mode Variables
   isVoiceMode = false;
   isRecording = false; 
@@ -739,6 +743,84 @@ export class AppComponent implements OnInit {
       }, 2000);
     } catch (err) { }
     document.body.removeChild(textarea);
+  }
+
+  // --- SHARING FEATURE ---
+  private showShareToastMsg(msg: string) {
+    this.shareToastMsg = msg;
+    this.showShareToast = true;
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      this.showShareToast = false;
+      this.cdr.detectChanges();
+    }, 2500);
+  }
+
+  async shareChat() {
+    const url = window.location.href;
+    const sessionTitle = this.sessions.find(s => s.id === this.currentSessionId)?.title || 'AI Companion Chat';
+    const title = `AI Companion — ${sessionTitle}`;
+    const text = `Check out this conversation on AI Companion! 🤖`;
+
+    if (navigator.share) {
+      // Mobile: open native OS share sheet
+      try {
+        await navigator.share({ title, text, url });
+      } catch (err: any) {
+        if (err?.name !== 'AbortError') {
+          // Only show error if user didn't just cancel
+          this.showShareToastMsg('⚠️ Could not share');
+        }
+      }
+    } else {
+      // Desktop: copy link to clipboard
+      try {
+        await navigator.clipboard.writeText(url);
+        this.showShareToastMsg('🔗 Link copied to clipboard!');
+      } catch {
+        // Fallback for older browsers
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        this.showShareToastMsg('🔗 Link copied to clipboard!');
+      }
+    }
+  }
+
+  async shareMessage(text: string) {
+    const url = window.location.href;
+    const title = 'AI Companion';
+    const shareText = text.length > 300 ? text.substring(0, 297) + '...' : text;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text: shareText, url });
+      } catch (err: any) {
+        if (err?.name !== 'AbortError') {
+          this.showShareToastMsg('⚠️ Could not share');
+        }
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(text);
+        this.showShareToastMsg('📋 Message copied to clipboard!');
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        this.showShareToastMsg('📋 Message copied to clipboard!');
+      }
+    }
   }
 
   async logout() {
