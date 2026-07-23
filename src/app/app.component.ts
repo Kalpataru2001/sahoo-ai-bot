@@ -81,6 +81,7 @@ export class AppComponent implements OnInit {
     interests: ''
   };
   userMemories: UserMemory[] = [];
+  newMemoryInput = '';
   isExtractingMemories = false;
 
   getUserFullName(): string {
@@ -149,6 +150,26 @@ export class AppComponent implements OnInit {
       this.isSettingsModalOpen = false;
       this.cdr.detectChanges();
     }, 1200);
+  }
+
+  async addManualMemory() {
+    const fact = this.newMemoryInput.trim();
+    if (!fact) return;
+
+    if (this.currentUser) {
+      this.userMemories = await this.authService.addMemories(this.currentUser.uid, [fact]);
+    } else {
+      const newMem: UserMemory = {
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        fact,
+        addedAt: new Date().toISOString(),
+        source: 'manual'
+      };
+      this.userMemories = [...this.userMemories, newMem].slice(-50);
+      localStorage.setItem('ai_companion_user_memories', JSON.stringify(this.userMemories));
+    }
+    this.newMemoryInput = '';
+    this.cdr.detectChanges();
   }
 
   async deleteMemoryItem(memoryId: string) {

@@ -332,10 +332,21 @@
 
       <!-- MEMORIES TAB -->
       <div class="modal-body memories-tab-body" *ngIf="activeSettingsTab === 'memories'">
-        <p class="modal-subtitle">What AI Companion automatically remembers about you from your conversations.</p>
+        <p class="modal-subtitle">What AI Companion remembers about you across all chats.</p>
+
+        <!-- Manual memory addition box -->
+        <div class="add-memory-box">
+          <input 
+            type="text" 
+            [(ngModel)]="newMemoryInput" 
+            (keydown.enter)="addManualMemory()" 
+            placeholder="Add something to remember (e.g. I live in Odisha, I love cricket)..." 
+          />
+          <button class="add-mem-btn" (click)="addManualMemory()">➕ Add</button>
+        </div>
 
         <div class="memory-status-badge" *ngIf="isExtractingMemories">
-          <span class="pulse-dot"></span> Learning new details from chat...
+          <span class="pulse-dot"></span> Learning new details from conversation...
         </div>
 
         <div class="empty-memories" *ngIf="userMemories.length === 0">
