@@ -40,6 +40,3 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
-
-# Admin credentials — NEVER commit this file
-src/app/admin-panel/admin.credentials.ts

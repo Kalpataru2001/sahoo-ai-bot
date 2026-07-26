@@ -47,14 +47,15 @@ The session is cleared for security. Use the URL again.
 
 ## Changing the Password
 1. Generate a new SHA-256 hash (Step 2 above)
-2. Replace `passwordHash` in `admin.credentials.ts`
-3. Done — no restart needed
-
----
-
 ## Security Notes
-- The credentials file is **gitignored** — never committed to the repo
-- Password is stored as a **SHA-256 hash**, not plain text
+- The credentials file is committed to git — but it only contains a **SHA-256 hash**, never the actual password
+- SHA-256 is a one-way function — the real password **cannot be reverse-engineered** from the hash
 - Admin session uses `sessionStorage` (cleared when browser closes)
+- Auto-logout after 30 min inactivity
 - The secret URL param is **wiped from the address bar** immediately after opening
 - Regular users have **no visible hint** that an admin panel exists
+
+## Changing the Password
+1. Generate a new SHA-256 hash (Step 2 above)
+2. Replace `passwordHash` in `src/app/admin-panel/admin.credentials.ts`
+3. Commit and push — the new hash takes effect on next deploy
