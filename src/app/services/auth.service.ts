@@ -21,7 +21,8 @@ import {
   getDocs,
   query,
   orderBy,
-  updateDoc
+  updateDoc,
+  onSnapshot
 } from 'firebase/firestore';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -361,6 +362,26 @@ export class AuthService {
       });
     } catch (err) {
       console.error('Admin: Error broadcasting announcement:', err);
+    }
+  }
+
+  subscribeToAnnouncements(callback: (data: { message: string; createdAt: string; active: boolean } | null) => void) {
+    try {
+      const announcementRef = doc(this.db, 'admin', 'announcements');
+      return onSnapshot(announcementRef, (docSnap) => {
+        if (docSnap.exists() && docSnap.data()['active']) {
+          callback(docSnap.data() as any);
+        } else {
+          callback(null);
+        }
+      }, (err) => {
+        console.error('Announcement listener error:', err);
+        callback(null);
+      });
+    } catch (err) {
+      console.error('Error setting up announcement listener:', err);
+      callback(null);
+      return () => {};
     }
   }
 }

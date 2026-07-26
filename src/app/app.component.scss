@@ -2229,3 +2229,55 @@ header {
     display: none !important;
   }
 }
+
+// ==========================================
+// BROADCAST ANNOUNCEMENT BANNER
+// ==========================================
+.announcement-banner {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15));
+  border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  animation: slideDown 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 100;
+
+  .banner-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.88rem;
+    color: #3b82f6;
+    font-weight: 500;
+  }
+
+  .dark-mode & {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+    border-bottom-color: rgba(59, 130, 246, 0.4);
+    .banner-content { color: #93c5fd; }
+  }
+
+  .banner-icon { font-size: 16px; flex-shrink: 0; }
+  .banner-text { line-height: 1.4; word-break: break-word; }
+
+  .banner-dismiss-btn {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+
+    &:hover { background: rgba(0, 0, 0, 0.1); color: #ef4444; }
+  }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

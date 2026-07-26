@@ -309,12 +309,34 @@ export class AppComponent implements OnInit {
   isIosDevice = false;
   showIosInstructions = false;
 
+  // Announcement Banner
+  activeAnnouncement: { message: string; createdAt: string } | null = null;
+  isAnnouncementDismissed = false;
+
+  dismissAnnouncement() {
+    this.isAnnouncementDismissed = true;
+    this.cdr.detectChanges();
+  }
+
   ngOnInit() {
     this.initSpeechRecognition(); 
     this.loadVoices();
     this.initPwaInstallPrompt();
     // Check if this is a shared chat link (?share=ID)
     this.checkSharedChatOnLoad();
+
+    // Subscribe to broadcast announcements from Admin Panel
+    this.authService.subscribeToAnnouncements((data) => {
+      if (data && data.message) {
+        if (!this.activeAnnouncement || this.activeAnnouncement.message !== data.message) {
+          this.isAnnouncementDismissed = false;
+        }
+        this.activeAnnouncement = data;
+      } else {
+        this.activeAnnouncement = null;
+      }
+      this.cdr.detectChanges();
+    });
 
     window.speechSynthesis.onvoiceschanged = () => {
       this.loadVoices();

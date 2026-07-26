@@ -104,6 +104,15 @@
         </div>
       </header>
 
+      <!-- BROADCAST ANNOUNCEMENT BANNER -->
+      <div class="announcement-banner" *ngIf="activeAnnouncement && !isAnnouncementDismissed">
+        <div class="banner-content">
+          <span class="banner-icon">📢</span>
+          <span class="banner-text">{{ activeAnnouncement.message }}</span>
+        </div>
+        <button class="banner-dismiss-btn" (click)="dismissAnnouncement()" title="Dismiss announcement">✕</button>
+      </div>
+
       <div class="chat-box" #scrollMe>
         <div *ngFor="let msg of messages; let i = index" class="message-row"
           [ngClass]="{'user-row': msg.role === 'user', 'bot-row': msg.role === 'bot'}">
