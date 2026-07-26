@@ -428,4 +428,12 @@
       </div>
     </div>
   </div>
+
+  <!-- ADMIN PANEL - Triggered via ?admin_access=true or Ctrl+Shift+A (after login) -->
+  <!-- Completely invisible to regular users - no sidebar link, no button, no badge -->
+  <app-admin-panel
+    *ngIf="isAdminPanelOpen"
+    (closePanel)="closeAdminPanel()">
+  </app-admin-panel>
+
 </div>

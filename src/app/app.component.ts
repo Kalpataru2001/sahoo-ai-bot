@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, ElementRef, ViewChild, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -6,6 +6,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { marked } from 'marked';
 import { User } from 'firebase/auth';
 import { AuthService, UserPreferences, UserMemory } from './services/auth.service';
+import { AdminPanelComponent } from './admin-panel/admin-panel.component';
 
 interface Message {
   role: 'user' | 'bot';
@@ -20,7 +21,7 @@ interface ChatSession {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AdminPanelComponent],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
@@ -66,6 +67,31 @@ export class AppComponent implements OnInit {
   recognition: any; 
   indianVoice: SpeechSynthesisVoice | null = null;
   
+  // Admin Panel
+  isAdminPanelOpen = false;
+
+  closeAdminPanel() {
+    this.isAdminPanelOpen = false;
+    this.cdr.detectChanges();
+  }
+
+  // Opens panel if session is already active (Ctrl+Shift+A after first login)
+  @HostListener('window:keydown', ['$event'])
+  handleGlobalKeydown(e: KeyboardEvent) {
+    if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+      e.preventDefault();
+      // Only open if session is already active — do NOT open without prior login
+      const hasSession = !!sessionStorage.getItem('admin_session_token');
+      if (hasSession && !this.isAdminPanelOpen) {
+        this.isAdminPanelOpen = true;
+        this.cdr.detectChanges();
+      } else if (this.isAdminPanelOpen) {
+        this.isAdminPanelOpen = false;
+        this.cdr.detectChanges();
+      }
+    }
+  }
+
   messages: Message[] = [
     { role: 'bot', text: 'Namaste! Voice Mode is ready. Click the big floating mic to try it!' }
   ];
@@ -291,6 +317,8 @@ export class AppComponent implements OnInit {
     this.initPwaInstallPrompt();
     // Check if this is a shared chat link (?share=ID)
     this.checkSharedChatOnLoad();
+    // Check if admin access is requested via secret URL param
+    this.checkAdminAccessOnLoad();
 
     window.speechSynthesis.onvoiceschanged = () => {
       this.loadVoices();
@@ -971,6 +999,19 @@ export class AppComponent implements OnInit {
     }
     this.sharedChatLoading = false;
     this.cdr.detectChanges();
+  }
+
+  // Check URL for ?admin_access=true and open admin panel login screen
+  checkAdminAccessOnLoad() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('admin_access') === 'true') {
+      this.isAdminPanelOpen = true;
+      // Clean the param from the address bar immediately
+      const url = new URL(window.location.href);
+      url.searchParams.delete('admin_access');
+      window.history.replaceState({}, '', url.toString());
+      this.cdr.detectChanges();
+    }
   }
 
   closeSharedChatView() {

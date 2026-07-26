@@ -1,0 +1,591 @@
+<div class="admin-overlay">
+  <div class="admin-wrapper">
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LOGIN SCREEN
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <div class="admin-login-screen" *ngIf="!isAuthenticated">
+      <button class="admin-close-x" (click)="closeWithoutLogout()" title="Close">✕</button>
+
+      <div class="login-card" [class.shake]="loginShake">
+        <div class="login-logo">
+          <div class="shield-icon">🛡️</div>
+          <h1>Admin Panel</h1>
+          <p>AI Companion — Restricted Access</p>
+        </div>
+
+        <div class="login-error" *ngIf="loginError">
+          <span>⚠️ {{ loginError }}</span>
+        </div>
+
+        <form class="login-form" (ngSubmit)="submitLogin()">
+          <div class="login-field">
+            <label for="admin-id">Admin ID</label>
+            <div class="input-icon-wrap">
+              <span class="field-icon">👤</span>
+              <input
+                id="admin-id"
+                type="text"
+                [(ngModel)]="loginId"
+                name="adminId"
+                placeholder="Enter admin ID"
+                autocomplete="off"
+                [disabled]="loginLoading"
+              />
+            </div>
+          </div>
+
+          <div class="login-field">
+            <label for="admin-pass">Password</label>
+            <div class="input-icon-wrap">
+              <span class="field-icon">🔑</span>
+              <input
+                id="admin-pass"
+                [type]="showPassword ? 'text' : 'password'"
+                [(ngModel)]="loginPassword"
+                name="adminPass"
+                placeholder="Enter password"
+                autocomplete="off"
+                [disabled]="loginLoading"
+              />
+              <button type="button" class="toggle-pass" (click)="showPassword = !showPassword">
+                {{ showPassword ? '🙈' : '👁️' }}
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="login-btn" [disabled]="loginLoading">
+            <span *ngIf="!loginLoading">🔐 Sign In as Admin</span>
+            <span *ngIf="loginLoading" class="login-spinner">Verifying...</span>
+          </button>
+        </form>
+
+        <p class="login-hint">Hint: Use <strong>?admin_access=true</strong> in URL, or <strong>Ctrl+Shift+A</strong> to open this panel.</p>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         ADMIN DASHBOARD
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <div class="admin-dashboard" *ngIf="isAuthenticated">
+
+      <!-- SIDEBAR NAV -->
+      <aside class="admin-sidebar">
+        <div class="admin-brand">
+          <span class="brand-icon">🛡️</span>
+          <div class="brand-text">
+            <span class="brand-title">Admin Panel</span>
+            <span class="brand-sub">AI Companion</span>
+          </div>
+        </div>
+
+        <nav class="admin-nav">
+          <button class="nav-item" [class.active]="activeTab === 'overview'" (click)="switchTab('overview')">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Overview</span>
+          </button>
+          <button class="nav-item" [class.active]="activeTab === 'users'" (click)="switchTab('users')">
+            <span class="nav-icon">👥</span>
+            <span class="nav-label">Users</span>
+            <span class="nav-badge" *ngIf="stats.totalUsers > 0">{{ stats.totalUsers }}</span>
+          </button>
+          <button class="nav-item" [class.active]="activeTab === 'chat-viewer'" (click)="switchTab('chat-viewer')">
+            <span class="nav-icon">💬</span>
+            <span class="nav-label">Chat Viewer</span>
+          </button>
+          <button class="nav-item" [class.active]="activeTab === 'shared-chats'" (click)="switchTab('shared-chats')">
+            <span class="nav-icon">🔗</span>
+            <span class="nav-label">Shared Chats</span>
+            <span class="nav-badge" *ngIf="sharedChats.length > 0">{{ sharedChats.length }}</span>
+          </button>
+          <button class="nav-item" [class.active]="activeTab === 'settings'" (click)="switchTab('settings')">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-label">Settings</span>
+          </button>
+        </nav>
+
+        <div class="admin-sidebar-footer">
+          <button class="refresh-btn" (click)="refreshData()" [disabled]="isLoading" title="Refresh Data">
+            <span [class.spinning]="isLoading">🔄</span>
+            Refresh
+          </button>
+          <button class="logout-btn" (click)="logout()" title="Logout">
+            🚪 Logout
+          </button>
+        </div>
+      </aside>
+
+      <!-- MAIN CONTENT -->
+      <main class="admin-main">
+
+        <!-- TOP BAR -->
+        <div class="admin-topbar">
+          <div class="topbar-left">
+            <h2 class="page-title">
+              <span *ngIf="activeTab === 'overview'">📊 Overview</span>
+              <span *ngIf="activeTab === 'users'">👥 Users</span>
+              <span *ngIf="activeTab === 'chat-viewer'">💬 Chat Viewer</span>
+              <span *ngIf="activeTab === 'shared-chats'">🔗 Shared Chats</span>
+              <span *ngIf="activeTab === 'settings'">⚙️ Settings</span>
+            </h2>
+          </div>
+          <div class="topbar-right">
+            <span class="admin-badge">🟢 Admin</span>
+            <button class="topbar-close" (click)="closeWithoutLogout()" title="Close Admin Panel (Ctrl+Shift+A)">✕ Close</button>
+          </div>
+        </div>
+
+        <!-- LOADING / ERROR -->
+        <div class="loading-state" *ngIf="isLoading">
+          <div class="spinner-ring"></div>
+          <p>Loading dashboard data...</p>
+        </div>
+        <div class="error-state" *ngIf="loadError && !isLoading">
+          <div class="error-icon">⚠️</div>
+          <p>{{ loadError }}</p>
+          <button (click)="refreshData()">Retry</button>
+        </div>
+
+        <div class="tab-content" *ngIf="!isLoading && !loadError">
+
+          <!-- ═════════════════════════════════════════
+               TAB: OVERVIEW
+               ═════════════════════════════════════════ -->
+          <div *ngIf="activeTab === 'overview'" class="overview-tab">
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+              <div class="stat-card stat-blue">
+                <div class="stat-icon">👥</div>
+                <div class="stat-body">
+                  <span class="stat-value">{{ stats.totalUsers }}</span>
+                  <span class="stat-label">Total Users</span>
+                </div>
+              </div>
+              <div class="stat-card stat-green">
+                <div class="stat-icon">💬</div>
+                <div class="stat-body">
+                  <span class="stat-value">{{ stats.totalMessages }}</span>
+                  <span class="stat-label">Total Messages</span>
+                </div>
+              </div>
+              <div class="stat-card stat-purple">
+                <div class="stat-icon">🔗</div>
+                <div class="stat-body">
+                  <span class="stat-value">{{ stats.totalSharedChats }}</span>
+                  <span class="stat-label">Shared Chats</span>
+                </div>
+              </div>
+              <div class="stat-card stat-orange">
+                <div class="stat-icon">🧠</div>
+                <div class="stat-body">
+                  <span class="stat-value">{{ stats.totalMemories }}</span>
+                  <span class="stat-label">Stored Memories</span>
+                </div>
+              </div>
+              <div class="stat-card stat-teal">
+                <div class="stat-icon">🆕</div>
+                <div class="stat-body">
+                  <span class="stat-value">{{ stats.newUsersToday }}</span>
+                  <span class="stat-label">Active Today</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Users -->
+            <div class="section-card">
+              <div class="section-header">
+                <h3>🕒 Recently Active Users</h3>
+                <button class="view-all-btn" (click)="switchTab('users')">View All →</button>
+              </div>
+              <div class="mini-user-list">
+                <div class="mini-user-row" *ngFor="let user of allUsers.slice(0, 5)" (click)="selectUser(user)">
+                  <div class="mini-avatar">
+                    <img *ngIf="user.photoURL" [src]="user.photoURL" [alt]="user.displayName" />
+                    <span *ngIf="!user.photoURL">{{ getUserInitial(user) }}</span>
+                  </div>
+                  <div class="mini-user-info">
+                    <span class="mini-name">{{ user.displayName }}</span>
+                    <span class="mini-email">{{ user.email }}</span>
+                  </div>
+                  <div class="mini-meta">
+                    <span class="mini-tag">{{ getTotalMessagesForUser(user) }} msgs</span>
+                    <span class="mini-tag">{{ user.memories?.length || 0 }} memories</span>
+                  </div>
+                  <span class="mini-date">{{ formatDate(user.lastLoginAt) }}</span>
+                </div>
+                <div class="empty-state" *ngIf="allUsers.length === 0">
+                  <p>No users found in Firestore.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Shared Chats -->
+            <div class="section-card">
+              <div class="section-header">
+                <h3>🔗 Recent Shared Chats</h3>
+                <button class="view-all-btn" (click)="switchTab('shared-chats')">View All →</button>
+              </div>
+              <div class="mini-shared-list">
+                <div class="mini-shared-row" *ngFor="let chat of sharedChats.slice(0, 4)" (click)="previewSharedChat(chat); activeTab = 'shared-chats'">
+                  <span class="chat-icon-sm">💬</span>
+                  <div class="mini-shared-info">
+                    <span class="mini-name">{{ chat.title }}</span>
+                    <span class="mini-email">by {{ chat.sharedByName }}</span>
+                  </div>
+                  <span class="mini-date">{{ formatDate(chat.createdAt) }}</span>
+                </div>
+                <div class="empty-state" *ngIf="sharedChats.length === 0">
+                  <p>No shared chats yet.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ═════════════════════════════════════════
+               TAB: USERS
+               ═════════════════════════════════════════ -->
+          <div *ngIf="activeTab === 'users'" class="users-tab">
+            <div class="table-toolbar">
+              <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input
+                  type="text"
+                  [(ngModel)]="userSearch"
+                  (ngModelChange)="applyUserFilter()"
+                  placeholder="Search by name, email or UID..."
+                  id="user-search-input"
+                />
+              </div>
+              <div class="toolbar-actions">
+                <span class="result-count">{{ filteredUsers.length }} user{{ filteredUsers.length !== 1 ? 's' : '' }}</span>
+                <button class="export-btn" (click)="exportCSV()" title="Export as CSV">
+                  📋 Export CSV
+                </button>
+              </div>
+            </div>
+
+            <div class="success-banner" *ngIf="deleteSuccess">✅ {{ deleteSuccess }}</div>
+
+            <div class="users-table-wrap">
+              <table class="users-table">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Last Active</th>
+                    <th class="center">Chats</th>
+                    <th class="center">Messages</th>
+                    <th class="center">Memories</th>
+                    <th class="center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let user of paginatedUsers" class="user-row" (click)="selectUser(user)">
+                    <td class="user-cell">
+                      <div class="user-avatar-sm">
+                        <img *ngIf="user.photoURL" [src]="user.photoURL" [alt]="user.displayName" />
+                        <span *ngIf="!user.photoURL">{{ getUserInitial(user) }}</span>
+                      </div>
+                      <span class="user-name-cell">{{ user.displayName }}</span>
+                    </td>
+                    <td class="email-cell">{{ user.email }}</td>
+                    <td class="date-cell">{{ formatDate(user.lastLoginAt) }}</td>
+                    <td class="center">
+                      <span class="count-badge">{{ user.sessions?.length || 0 }}</span>
+                    </td>
+                    <td class="center">
+                      <span class="count-badge">{{ getTotalMessagesForUser(user) }}</span>
+                    </td>
+                    <td class="center">
+                      <span class="count-badge mem">{{ user.memories?.length || 0 }}</span>
+                    </td>
+                    <td class="center actions-cell" (click)="$event.stopPropagation()">
+                      <button class="action-icon-btn view-btn" (click)="selectUser(user)" title="View Chats">💬</button>
+                      <button class="action-icon-btn del-btn" (click)="confirmDeleteUser(user.uid)" title="Clear User Data">🗑️</button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="paginatedUsers.length === 0">
+                    <td colspan="7" class="empty-row">No users match your search.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" *ngIf="totalPages > 1">
+              <button class="page-btn" (click)="userPage = userPage - 1" [disabled]="userPage === 1">‹ Prev</button>
+              <button
+                class="page-btn"
+                *ngFor="let p of totalPagesArray"
+                [class.active]="p === userPage"
+                (click)="userPage = p"
+              >{{ p }}</button>
+              <button class="page-btn" (click)="userPage = userPage + 1" [disabled]="userPage === totalPages">Next ›</button>
+            </div>
+          </div>
+
+          <!-- ═════════════════════════════════════════
+               TAB: CHAT VIEWER
+               ═════════════════════════════════════════ -->
+          <div *ngIf="activeTab === 'chat-viewer'" class="chat-viewer-tab">
+            <!-- No user selected -->
+            <div class="no-selection" *ngIf="!selectedUser">
+              <div class="no-sel-icon">💬</div>
+              <h3>Select a User to View Chats</h3>
+              <p>Go to the <strong>Users</strong> tab and click any user row to view their conversation history.</p>
+              <button class="goto-users-btn" (click)="switchTab('users')">Go to Users →</button>
+            </div>
+
+            <!-- User chat view -->
+            <div class="user-detail" *ngIf="selectedUser">
+              <div class="user-detail-header">
+                <button class="back-btn" (click)="closeUserDetail()">← Back to Users</button>
+                <div class="detail-user-info">
+                  <div class="detail-avatar">
+                    <img *ngIf="selectedUser.photoURL" [src]="selectedUser.photoURL" [alt]="selectedUser.displayName" />
+                    <span *ngIf="!selectedUser.photoURL">{{ getUserInitial(selectedUser) }}</span>
+                  </div>
+                  <div>
+                    <h3>{{ selectedUser.displayName }}</h3>
+                    <span class="detail-email">{{ selectedUser.email }}</span>
+                  </div>
+                </div>
+                <div class="detail-stats">
+                  <span class="detail-stat">📁 {{ selectedUser.sessions.length || 0 }} sessions</span>
+                  <span class="detail-stat">💬 {{ getTotalMessagesForUser(selectedUser) }} messages</span>
+                  <span class="detail-stat">🧠 {{ selectedUser.memories.length || 0 }} memories</span>
+                </div>
+              </div>
+
+              <div class="detail-body">
+                <!-- Sessions list -->
+                <div class="sessions-panel">
+                  <h4>💾 Chat Sessions</h4>
+                  <div class="session-list">
+                    <div
+                      class="session-item"
+                      *ngFor="let sess of selectedUser.sessions; let i = index"
+                      [class.active]="selectedUserSessionIndex === i"
+                      (click)="selectedUserSessionIndex = i"
+                    >
+                      <span class="sess-icon">💬</span>
+                      <div class="sess-info">
+                        <span class="sess-title">{{ sess.title || 'Conversation ' + (i+1) }}</span>
+                        <span class="sess-count">{{ sess.messages?.length || 0 }} messages</span>
+                      </div>
+                    </div>
+                    <div class="empty-state" *ngIf="!selectedUser.sessions || selectedUser.sessions.length === 0">
+                      <p>No sessions found.</p>
+                    </div>
+                  </div>
+
+                  <!-- Memories section -->
+                  <h4 class="mem-header">🧠 Memories</h4>
+                  <div class="memory-chips">
+                    <div class="mem-chip" *ngFor="let m of selectedUser.memories">
+                      💡 {{ m.fact }}
+                    </div>
+                    <div class="empty-state" *ngIf="!selectedUser.memories || selectedUser.memories.length === 0">
+                      <p>No memories stored.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Messages view -->
+                <div class="messages-panel">
+                  <div class="messages-panel-header">
+                    <h4>
+                      {{ (selectedUser.sessions && selectedUser.sessions[selectedUserSessionIndex]?.title) || 'Conversation' }}
+                    </h4>
+                  </div>
+                  <div class="admin-messages-list">
+                    <div
+                      *ngFor="let msg of (selectedUser.sessions && selectedUser.sessions[selectedUserSessionIndex]?.messages) || []"
+                      class="admin-msg-row"
+                      [class.user-msg]="msg.role === 'user'"
+                      [class.bot-msg]="msg.role === 'bot'"
+                    >
+                      <div class="admin-msg-role">{{ msg.role === 'user' ? '👤' : '🤖' }}</div>
+                      <div class="admin-msg-bubble">{{ msg.text }}</div>
+                    </div>
+                    <div class="empty-state" *ngIf="!(selectedUser.sessions && selectedUser.sessions[selectedUserSessionIndex]?.messages?.length)">
+                      <p>No messages in this session.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ═════════════════════════════════════════
+               TAB: SHARED CHATS
+               ═════════════════════════════════════════ -->
+          <div *ngIf="activeTab === 'shared-chats'" class="shared-tab">
+            <div class="shared-layout" [class.has-preview]="selectedSharedChat">
+
+              <!-- Shared chats list -->
+              <div class="shared-list-panel">
+                <div class="shared-chat-card"
+                  *ngFor="let chat of sharedChats"
+                  [class.selected]="selectedSharedChat?.id === chat.id"
+                  (click)="previewSharedChat(chat)"
+                >
+                  <div class="shared-card-icon">💬</div>
+                  <div class="shared-card-body">
+                    <span class="shared-card-title">{{ chat.title }}</span>
+                    <span class="shared-card-meta">by {{ chat.sharedByName }}</span>
+                    <span class="shared-card-meta">{{ chat.messages?.length || 0 }} messages · {{ formatDate(chat.createdAt) }}</span>
+                  </div>
+                  <span class="shared-card-arrow">›</span>
+                </div>
+                <div class="empty-state" *ngIf="sharedChats.length === 0">
+                  <div class="empty-icon">🔗</div>
+                  <p>No shared chats yet.</p>
+                </div>
+              </div>
+
+              <!-- Preview panel -->
+              <div class="shared-preview-panel" *ngIf="selectedSharedChat">
+                <div class="preview-header">
+                  <div>
+                    <h3>{{ selectedSharedChat.title }}</h3>
+                    <p class="preview-meta">Shared by <strong>{{ selectedSharedChat.sharedByName }}</strong> · {{ formatDate(selectedSharedChat.createdAt) }}</p>
+                  </div>
+                  <button class="close-preview-btn" (click)="closeSharedChatPreview()">✕</button>
+                </div>
+                <div class="preview-messages">
+                  <div
+                    *ngFor="let msg of selectedSharedChat.messages"
+                    class="admin-msg-row"
+                    [class.user-msg]="msg.role === 'user'"
+                    [class.bot-msg]="msg.role === 'bot'"
+                  >
+                    <div class="admin-msg-role">{{ msg.role === 'user' ? '👤' : '🤖' }}</div>
+                    <div class="admin-msg-bubble">{{ msg.text }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ═════════════════════════════════════════
+               TAB: SETTINGS
+               ═════════════════════════════════════════ -->
+          <div *ngIf="activeTab === 'settings'" class="settings-tab">
+            <div class="settings-grid">
+
+              <!-- Broadcast Announcement -->
+              <div class="settings-card">
+                <div class="settings-card-header">
+                  <span class="settings-card-icon">📢</span>
+                  <h3>Broadcast Announcement</h3>
+                </div>
+                <p class="settings-card-desc">Send a message to the <code>admin/announcements</code> Firestore document. The app can display this to all users.</p>
+                <textarea
+                  [(ngModel)]="broadcastMessage"
+                  rows="4"
+                  placeholder="Type your announcement message here..."
+                  class="broadcast-textarea"
+                ></textarea>
+                <div class="broadcast-success" *ngIf="broadcastSent">✅ Announcement saved to Firestore!</div>
+                <button class="settings-action-btn broadcast-btn" (click)="sendBroadcast()" [disabled]="!broadcastMessage.trim() || broadcastLoading">
+                  {{ broadcastLoading ? 'Sending...' : '📢 Send Broadcast' }}
+                </button>
+              </div>
+
+              <!-- System Info -->
+              <div class="settings-card">
+                <div class="settings-card-header">
+                  <span class="settings-card-icon">🖥️</span>
+                  <h3>System Information</h3>
+                </div>
+                <div class="sys-info-table">
+                  <div class="sys-row">
+                    <span class="sys-key">Backend URL</span>
+                    <span class="sys-val">sahoo-ai-proxy-us.onrender.com</span>
+                  </div>
+                  <div class="sys-row">
+                    <span class="sys-key">Firebase Project</span>
+                    <span class="sys-val">sahoo-ai-bot</span>
+                  </div>
+                  <div class="sys-row">
+                    <span class="sys-key">Total Users</span>
+                    <span class="sys-val">{{ stats.totalUsers }}</span>
+                  </div>
+                  <div class="sys-row">
+                    <span class="sys-key">Total Messages</span>
+                    <span class="sys-val">{{ stats.totalMessages }}</span>
+                  </div>
+                  <div class="sys-row">
+                    <span class="sys-key">Shared Chats</span>
+                    <span class="sys-val">{{ stats.totalSharedChats }}</span>
+                  </div>
+                  <div class="sys-row">
+                    <span class="sys-key">Admin Session</span>
+                    <span class="sys-val sys-active">🟢 Active (sessionStorage)</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Security Info -->
+              <div class="settings-card">
+                <div class="settings-card-header">
+                  <span class="settings-card-icon">🔐</span>
+                  <h3>Security</h3>
+                </div>
+                <div class="security-info">
+                  <div class="sec-item">✅ Password stored as SHA-256 hash</div>
+                  <div class="sec-item">✅ Credentials file is gitignored</div>
+                  <div class="sec-item">✅ Session uses sessionStorage (auto-clears on browser close)</div>
+                  <div class="sec-item">✅ Auto-logout after 30 min inactivity</div>
+                  <div class="sec-item">✅ Admin panel invisible to regular users</div>
+                  <div class="sec-item">✅ Access via secret URL param only</div>
+                </div>
+                <button class="settings-action-btn logout-settings-btn" (click)="logout()">
+                  🚪 Logout &amp; Close Panel
+                </button>
+              </div>
+
+              <!-- Keyboard Shortcuts -->
+              <div class="settings-card">
+                <div class="settings-card-header">
+                  <span class="settings-card-icon">⌨️</span>
+                  <h3>Keyboard Shortcuts</h3>
+                </div>
+                <div class="shortcuts-list">
+                  <div class="shortcut-row">
+                    <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>A</kbd>
+                    <span>Toggle Admin Panel</span>
+                  </div>
+                  <div class="shortcut-row">
+                    <kbd>Esc</kbd>
+                    <span>Close modal / Go back</span>
+                  </div>
+                </div>
+                <p class="shortcut-note">💡 After logging in once, use <strong>Ctrl+Shift+A</strong> to reopen the panel without the secret URL.</p>
+              </div>
+            </div>
+          </div>
+
+        </div> <!-- /tab-content -->
+      </main>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         DELETE CONFIRM MODAL
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <div class="admin-modal-overlay" *ngIf="userDeleteConfirmUid" (click)="cancelDelete()">
+      <div class="admin-modal-box" (click)="$event.stopPropagation()">
+        <div class="modal-icon">⚠️</div>
+        <h3>Clear User Data?</h3>
+        <p>This will wipe all <strong>chat sessions</strong> and <strong>memories</strong> for this user from Firestore. Their Firebase Auth account will remain intact.</p>
+        <div class="modal-actions">
+          <button class="modal-cancel" (click)="cancelDelete()">Cancel</button>
+          <button class="modal-confirm" (click)="executeDeleteUser()">Yes, Clear Data</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

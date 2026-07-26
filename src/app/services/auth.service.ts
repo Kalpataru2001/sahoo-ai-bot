@@ -17,7 +17,11 @@ import {
   setDoc, 
   getDoc,
   collection,
-  addDoc
+  addDoc,
+  getDocs,
+  query,
+  orderBy,
+  updateDoc
 } from 'firebase/firestore';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -306,5 +310,57 @@ export class AuthService {
       console.error('Error fetching shared chat:', err);
     }
     return null;
+  }
+
+  // ── ADMIN-ONLY METHODS ────────────────────────────────────────────────────
+  async adminGetAllUsers(): Promise<any[]> {
+    try {
+      const usersRef = collection(this.db, 'users');
+      const q = query(usersRef, orderBy('lastLoginAt', 'desc'));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(d => ({ uid: d.id, ...d.data() }));
+    } catch (err) {
+      console.error('Admin: Error fetching all users:', err);
+      return [];
+    }
+  }
+
+  async adminGetAllSharedChats(): Promise<any[]> {
+    try {
+      const ref = collection(this.db, 'shared_chats');
+      const q = query(ref, orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (err) {
+      console.error('Admin: Error fetching shared chats:', err);
+      return [];
+    }
+  }
+
+  async adminDeleteUserData(uid: string): Promise<void> {
+    if (!uid) return;
+    try {
+      const userDocRef = doc(this.db, 'users', uid);
+      await updateDoc(userDocRef, {
+        sessions: [],
+        memories: [],
+        adminDeletedAt: new Date().toISOString()
+      });
+    } catch (err) {
+      console.error('Admin: Error deleting user data:', err);
+    }
+  }
+
+  async adminBroadcastAnnouncement(message: string): Promise<void> {
+    try {
+      const announcementRef = doc(this.db, 'admin', 'announcements');
+      await setDoc(announcementRef, {
+        message,
+        createdAt: new Date().toISOString(),
+        active: true
+      });
+    } catch (err) {
+      console.error('Admin: Error broadcasting announcement:', err);
+    }
   }
 }
