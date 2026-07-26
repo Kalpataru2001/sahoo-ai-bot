@@ -210,7 +210,7 @@
                   </div>
                   <div class="mini-meta">
                     <span class="mini-tag">{{ getTotalMessagesForUser(user) }} msgs</span>
-                    <span class="mini-tag">{{ user.memories?.length || 0 }} memories</span>
+                    <span class="mini-tag">{{ user.memories ? user.memories.length : 0 }} memories</span>
                   </div>
                   <span class="mini-date">{{ formatDate(user.lastLoginAt) }}</span>
                 </div>
@@ -292,13 +292,13 @@
                     <td class="email-cell">{{ user.email }}</td>
                     <td class="date-cell">{{ formatDate(user.lastLoginAt) }}</td>
                     <td class="center">
-                      <span class="count-badge">{{ user.sessions?.length || 0 }}</span>
+                      <span class="count-badge">{{ user.sessions ? user.sessions.length : 0 }}</span>
                     </td>
                     <td class="center">
                       <span class="count-badge">{{ getTotalMessagesForUser(user) }}</span>
                     </td>
                     <td class="center">
-                      <span class="count-badge mem">{{ user.memories?.length || 0 }}</span>
+                      <span class="count-badge mem">{{ user.memories ? user.memories.length : 0 }}</span>
                     </td>
                     <td class="center actions-cell" (click)="$event.stopPropagation()">
                       <button class="action-icon-btn view-btn" (click)="selectUser(user)" title="View Chats">💬</button>
@@ -372,7 +372,7 @@
                       <span class="sess-icon">💬</span>
                       <div class="sess-info">
                         <span class="sess-title">{{ sess.title || 'Conversation ' + (i+1) }}</span>
-                        <span class="sess-count">{{ sess.messages?.length || 0 }} messages</span>
+                        <span class="sess-count">{{ sess.messages ? sess.messages.length : 0 }} messages</span>
                       </div>
                     </div>
                     <div class="empty-state" *ngIf="!selectedUser.sessions || selectedUser.sessions.length === 0">
@@ -396,12 +396,12 @@
                 <div class="messages-panel">
                   <div class="messages-panel-header">
                     <h4>
-                      {{ (selectedUser.sessions && selectedUser.sessions[selectedUserSessionIndex]?.title) || 'Conversation' }}
+                      {{ (selectedUser.sessions && selectedUser.sessions[selectedUserSessionIndex] && selectedUser.sessions[selectedUserSessionIndex].title) || 'Conversation' }}
                     </h4>
                   </div>
                   <div class="admin-messages-list">
                     <div
-                      *ngFor="let msg of (selectedUser.sessions && selectedUser.sessions[selectedUserSessionIndex]?.messages) || []"
+                      *ngFor="let msg of (selectedUser.sessions && selectedUser.sessions[selectedUserSessionIndex] && selectedUser.sessions[selectedUserSessionIndex].messages) || []"
                       class="admin-msg-row"
                       [class.user-msg]="msg.role === 'user'"
                       [class.bot-msg]="msg.role === 'bot'"
@@ -409,7 +409,7 @@
                       <div class="admin-msg-role">{{ msg.role === 'user' ? '👤' : '🤖' }}</div>
                       <div class="admin-msg-bubble">{{ msg.text }}</div>
                     </div>
-                    <div class="empty-state" *ngIf="!(selectedUser.sessions && selectedUser.sessions[selectedUserSessionIndex]?.messages?.length)">
+                    <div class="empty-state" *ngIf="!(selectedUser.sessions && selectedUser.sessions[selectedUserSessionIndex] && selectedUser.sessions[selectedUserSessionIndex].messages && selectedUser.sessions[selectedUserSessionIndex].messages.length)">
                       <p>No messages in this session.</p>
                     </div>
                   </div>
@@ -428,14 +428,14 @@
               <div class="shared-list-panel">
                 <div class="shared-chat-card"
                   *ngFor="let chat of sharedChats"
-                  [class.selected]="selectedSharedChat?.id === chat.id"
+                  [class.selected]="selectedSharedChat && selectedSharedChat.id === chat.id"
                   (click)="previewSharedChat(chat)"
                 >
                   <div class="shared-card-icon">💬</div>
                   <div class="shared-card-body">
                     <span class="shared-card-title">{{ chat.title }}</span>
                     <span class="shared-card-meta">by {{ chat.sharedByName }}</span>
-                    <span class="shared-card-meta">{{ chat.messages?.length || 0 }} messages · {{ formatDate(chat.createdAt) }}</span>
+                    <span class="shared-card-meta">{{ chat.messages ? chat.messages.length : 0 }} messages · {{ formatDate(chat.createdAt) }}</span>
                   </div>
                   <span class="shared-card-arrow">›</span>
                 </div>
