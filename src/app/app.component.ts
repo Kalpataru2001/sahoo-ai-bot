@@ -7,6 +7,7 @@ import { marked } from 'marked';
 import { User } from 'firebase/auth';
 import { AuthService, UserPreferences, UserMemory } from './services/auth.service';
 import { AdminPanelComponent } from './admin-panel/admin-panel.component';
+import { AdminService } from './admin-panel/admin.service';
 
 interface Message {
   role: 'user' | 'bot';
@@ -75,18 +76,14 @@ export class AppComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // Opens panel if session is already active (Ctrl+Shift+A after first login)
+  // Ctrl+Shift+A: toggle panel within the same session (after first login via Sign In form)
   @HostListener('window:keydown', ['$event'])
   handleGlobalKeydown(e: KeyboardEvent) {
     if (e.ctrlKey && e.shiftKey && e.key === 'A') {
       e.preventDefault();
-      // Only open if session is already active — do NOT open without prior login
       const hasSession = !!sessionStorage.getItem('admin_session_token');
-      if (hasSession && !this.isAdminPanelOpen) {
-        this.isAdminPanelOpen = true;
-        this.cdr.detectChanges();
-      } else if (this.isAdminPanelOpen) {
-        this.isAdminPanelOpen = false;
+      if (hasSession) {
+        this.isAdminPanelOpen = !this.isAdminPanelOpen;
         this.cdr.detectChanges();
       }
     }
@@ -274,7 +271,8 @@ export class AppComponent implements OnInit {
     private http: HttpClient, 
     public cdr: ChangeDetectorRef, 
     private sanitizer: DomSanitizer,
-    public authService: AuthService
+    public authService: AuthService,
+    private adminService: AdminService
   ) {}
 
   // Cache for rendered markdown HTML to prevent DOM node recreation & preserve text selection!
@@ -317,8 +315,6 @@ export class AppComponent implements OnInit {
     this.initPwaInstallPrompt();
     // Check if this is a shared chat link (?share=ID)
     this.checkSharedChatOnLoad();
-    // Check if admin access is requested via secret URL param
-    this.checkAdminAccessOnLoad();
 
     window.speechSynthesis.onvoiceschanged = () => {
       this.loadVoices();
@@ -833,6 +829,21 @@ export class AppComponent implements OnInit {
     this.authLoading = true;
     this.authError = '';
     try {
+      // ── Admin credential check (runs before Firebase Auth) ──────────────
+      // If user types the admin ID + password, open Admin Panel directly.
+      if (this.authMode === 'login') {
+        const isAdmin = await this.adminService.verifyAdmin(
+          this.authEmail.trim(),
+          this.authPassword
+        );
+        if (isAdmin) {
+          this.closeAuthModal();
+          this.isAdminPanelOpen = true;
+          this.cdr.detectChanges();
+          return;
+        }
+      }
+      // ── Normal Firebase Auth ─────────────────────────────────────────────
       if (this.authMode === 'login') {
         await this.authService.loginWithEmail(this.authEmail, this.authPassword);
       } else {
@@ -1001,12 +1012,11 @@ export class AppComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // Check URL for ?admin_access=true and open admin panel login screen
+  // Check URL for ?admin_access=true (kept as legacy fallback — main access is via Sign In form)
   checkAdminAccessOnLoad() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('admin_access') === 'true') {
       this.isAdminPanelOpen = true;
-      // Clean the param from the address bar immediately
       const url = new URL(window.location.href);
       url.searchParams.delete('admin_access');
       window.history.replaceState({}, '', url.toString());
