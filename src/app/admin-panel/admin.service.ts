@@ -32,7 +32,7 @@ export class AdminService {
 
   // ── ADMIN AUTHENTICATION ─────────────────────────────────────────────────
   async verifyAdmin(id: string, password: string): Promise<boolean> {
-    if (id.trim() !== ADMIN_CREDENTIALS.id) return false;
+    if (id.trim().toLowerCase() !== ADMIN_CREDENTIALS.id.toLowerCase()) return false;
     try {
       const encoded = new TextEncoder().encode(password);
       const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);

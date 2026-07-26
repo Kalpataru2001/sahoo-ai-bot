@@ -15,7 +15,6 @@
 
 export const ADMIN_CREDENTIALS = {
   id: 'admin',
-  // SHA-256 hash of your chosen admin password (NOT plain text)
-  // Default hash below = SHA-256 of "Admin@2025" — CHANGE THIS immediately!
-  passwordHash: 'c2f07c1ecf7fdb0da5dad0a0a2dbc78ceaa0fa2f57a49cdba7d2cac8be4282f2'
+  // SHA-256 hash of "Admin@2025"
+  passwordHash: 'fcf7bb6d546cfb82d2e55486984ae7a1862a666acb441e0cf8b4ed34a4fcf9d7'
 };
