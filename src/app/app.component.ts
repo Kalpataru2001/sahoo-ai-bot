@@ -310,8 +310,9 @@ export class AppComponent implements OnInit {
   showIosInstructions = false;
 
   // Announcement Banner
-  activeAnnouncement: { message: string; createdAt: string } | null = null;
+  activeAnnouncement: { message: string; createdAt: string; expiresAt?: string | null } | null = null;
   isAnnouncementDismissed = false;
+  private announcementTimer: any = null;
 
   dismissAnnouncement() {
     this.isAnnouncementDismissed = true;
@@ -327,7 +328,26 @@ export class AppComponent implements OnInit {
 
     // Subscribe to broadcast announcements from Admin Panel
     this.authService.subscribeToAnnouncements((data) => {
+      if (this.announcementTimer) {
+        clearTimeout(this.announcementTimer);
+        this.announcementTimer = null;
+      }
+
       if (data && data.message) {
+        if (data.expiresAt) {
+          const remainingMs = new Date(data.expiresAt).getTime() - Date.now();
+          if (remainingMs <= 0) {
+            this.activeAnnouncement = null;
+            this.cdr.detectChanges();
+            return;
+          }
+          // Auto-hide when duration expires
+          this.announcementTimer = setTimeout(() => {
+            this.activeAnnouncement = null;
+            this.cdr.detectChanges();
+          }, remainingMs);
+        }
+
         if (!this.activeAnnouncement || this.activeAnnouncement.message !== data.message) {
           this.isAnnouncementDismissed = false;
         }

@@ -52,6 +52,14 @@ export interface UserMemory {
   source: 'auto' | 'manual';
 }
 
+export interface AnnouncementData {
+  message: string;
+  createdAt: string;
+  expiresAt?: string | null;
+  active: boolean;
+  stoppedAt?: string | null;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -352,12 +360,18 @@ export class AuthService {
     }
   }
 
-  async adminBroadcastAnnouncement(message: string): Promise<void> {
+  async adminBroadcastAnnouncement(message: string, durationMinutes?: number | null): Promise<void> {
     try {
       const announcementRef = doc(this.db, 'admin', 'announcements');
+      const createdAt = new Date();
+      let expiresAt: string | null = null;
+      if (durationMinutes && durationMinutes > 0) {
+        expiresAt = new Date(createdAt.getTime() + durationMinutes * 60 * 1000).toISOString();
+      }
       await setDoc(announcementRef, {
         message,
-        createdAt: new Date().toISOString(),
+        createdAt: createdAt.toISOString(),
+        expiresAt,
         active: true
       });
     } catch (err) {
@@ -365,15 +379,37 @@ export class AuthService {
     }
   }
 
-  subscribeToAnnouncements(callback: (data: { message: string; createdAt: string; active: boolean } | null) => void) {
+  async adminStopAnnouncement(): Promise<void> {
+    try {
+      const announcementRef = doc(this.db, 'admin', 'announcements');
+      await setDoc(announcementRef, {
+        active: false,
+        stoppedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch (err) {
+      console.error('Admin: Error stopping announcement:', err);
+    }
+  }
+
+  subscribeToAnnouncements(callback: (data: AnnouncementData | null) => void) {
     try {
       const announcementRef = doc(this.db, 'admin', 'announcements');
       return onSnapshot(announcementRef, (docSnap) => {
-        if (docSnap.exists() && docSnap.data()['active']) {
-          callback(docSnap.data() as any);
-        } else {
-          callback(null);
+        if (docSnap.exists()) {
+          const data = docSnap.data() as AnnouncementData;
+          if (data && data.active && data.message) {
+            if (data.expiresAt) {
+              const expiry = new Date(data.expiresAt);
+              if (expiry <= new Date()) {
+                callback(null);
+                return;
+              }
+            }
+            callback(data);
+            return;
+          }
         }
+        callback(null);
       }, (err) => {
         console.error('Announcement listener error:', err);
         callback(null);

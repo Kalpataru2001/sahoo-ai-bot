@@ -476,19 +476,66 @@
             <div class="settings-grid">
 
               <!-- Broadcast Announcement -->
-              <div class="settings-card">
+              <div class="settings-card broadcast-card">
                 <div class="settings-card-header">
                   <span class="settings-card-icon">📢</span>
                   <h3>Broadcast Announcement</h3>
                 </div>
-                <p class="settings-card-desc">Send a message to the <code>admin/announcements</code> Firestore document. The app can display this to all users.</p>
-                <textarea
-                  [(ngModel)]="broadcastMessage"
-                  rows="4"
-                  placeholder="Type your announcement message here..."
-                  class="broadcast-textarea"
-                ></textarea>
-                <div class="broadcast-success" *ngIf="broadcastSent">✅ Announcement saved to Firestore!</div>
+                <p class="settings-card-desc">Send a message to all app users. Set an optional time limit or stop active broadcasts at any time.</p>
+
+                <!-- Currently Running Announcement Status Card -->
+                <div class="active-broadcast-status" *ngIf="currentAnnouncement && currentAnnouncement.active && currentAnnouncement.message">
+                  <div class="status-header">
+                    <span class="live-pulse-dot"></span>
+                    <span class="status-title">Currently Live Broadcast</span>
+                  </div>
+                  <div class="active-msg-preview">{{ currentAnnouncement.message }}</div>
+                  <div class="status-meta">
+                    <span>🕒 Posted: {{ formatDate(currentAnnouncement.createdAt) }}</span>
+                    <span>⏳ {{ getRemainingTimeString(currentAnnouncement.expiresAt) }}</span>
+                  </div>
+                  <button class="stop-broadcast-btn" (click)="stopBroadcast()" [disabled]="broadcastStopping">
+                    {{ broadcastStopping ? 'Stopping...' : '⏹️ Stop & Clear Announcement' }}
+                  </button>
+                </div>
+
+                <div class="broadcast-form-group">
+                  <label for="broadcastMsgInput">Announcement Message</label>
+                  <textarea
+                    id="broadcastMsgInput"
+                    [(ngModel)]="broadcastMessage"
+                    rows="3"
+                    placeholder="Type your announcement message here..."
+                    class="broadcast-textarea"
+                  ></textarea>
+                </div>
+
+                <div class="broadcast-form-group">
+                  <label for="broadcastDuration">Display Duration (Time-Based Expiration)</label>
+                  <select id="broadcastDuration" [(ngModel)]="broadcastDurationMinutes" class="broadcast-select">
+                    <option [ngValue]="null">♾️ No Expiration (Runs until manually stopped)</option>
+                    <option [ngValue]="15">⏱️ 15 Minutes</option>
+                    <option [ngValue]="60">⏱️ 1 Hour</option>
+                    <option [ngValue]="360">⏱️ 6 Hours</option>
+                    <option [ngValue]="1440">⏱️ 24 Hours (1 Day)</option>
+                    <option [ngValue]="-1">⚙️ Custom Duration (in Minutes)</option>
+                  </select>
+                </div>
+
+                <div class="broadcast-form-group" *ngIf="broadcastDurationMinutes === -1">
+                  <label for="customDuration">Custom Duration (Minutes)</label>
+                  <input
+                    id="customDuration"
+                    type="number"
+                    min="1"
+                    [(ngModel)]="customDurationInput"
+                    class="broadcast-input"
+                    placeholder="e.g. 30"
+                  />
+                </div>
+
+                <div class="broadcast-success" *ngIf="broadcastSent">✅ Announcement broadcasted to all users!</div>
+
                 <button class="settings-action-btn broadcast-btn" (click)="sendBroadcast()" [disabled]="!broadcastMessage.trim() || broadcastLoading">
                   {{ broadcastLoading ? 'Sending...' : '📢 Send Broadcast' }}
                 </button>

@@ -84,8 +84,16 @@ export class AdminService {
     return this.authService.adminDeleteUserData(uid);
   }
 
-  async broadcastAnnouncement(message: string): Promise<void> {
-    return this.authService.adminBroadcastAnnouncement(message);
+  async broadcastAnnouncement(message: string, durationMinutes?: number | null): Promise<void> {
+    return this.authService.adminBroadcastAnnouncement(message, durationMinutes);
+  }
+
+  async stopAnnouncement(): Promise<void> {
+    return this.authService.adminStopAnnouncement();
+  }
+
+  subscribeToAnnouncements(callback: (data: any) => void) {
+    return this.authService.subscribeToAnnouncements(callback);
   }
 
   // ── STATS AGGREGATION ─────────────────────────────────────────────────────

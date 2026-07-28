@@ -61,10 +61,15 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
   // ── SHARED CHATS STATE ─────────────────────────────────────────────────────
   selectedSharedChat: any | null = null;
 
-  // ── SETTINGS STATE ─────────────────────────────────────────────────────────
+  // ── SETTINGS & ANNOUNCEMENT STATE ──────────────────────────────────────────
   broadcastMessage = '';
+  broadcastDurationMinutes: number | null = null; // null = indefinite
+  customDurationInput = 30;
   broadcastSent = false;
   broadcastLoading = false;
+  broadcastStopping = false;
+  currentAnnouncement: any = null;
+  private announcementUnsub: any = null;
 
   // ── AUTO LOGOUT ────────────────────────────────────────────────────────────
   private inactivityTimer: any;
@@ -82,10 +87,17 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
       this.loadDashboardData();
     }
     this.resetInactivityTimer();
+
+    // Subscribe to live announcements to show status & remaining time in Admin Panel
+    this.announcementUnsub = this.adminService.subscribeToAnnouncements((data) => {
+      this.currentAnnouncement = data;
+      this.cdr.detectChanges();
+    });
   }
 
   ngOnDestroy() {
     if (this.inactivityTimer) clearTimeout(this.inactivityTimer);
+    if (this.announcementUnsub) this.announcementUnsub();
   }
 
   // ── INACTIVITY AUTO-LOGOUT ─────────────────────────────────────────────────
@@ -292,12 +304,42 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
     if (!this.broadcastMessage.trim()) return;
     this.broadcastLoading = true;
     this.cdr.detectChanges();
-    await this.adminService.broadcastAnnouncement(this.broadcastMessage.trim());
+
+    let duration: number | null = null;
+    if (this.broadcastDurationMinutes === -1) {
+      duration = Math.max(1, this.customDurationInput || 30);
+    } else if (typeof this.broadcastDurationMinutes === 'number') {
+      duration = this.broadcastDurationMinutes;
+    }
+
+    await this.adminService.broadcastAnnouncement(this.broadcastMessage.trim(), duration);
     this.broadcastLoading = false;
     this.broadcastSent = true;
     this.broadcastMessage = '';
     this.cdr.detectChanges();
     setTimeout(() => { this.broadcastSent = false; this.cdr.detectChanges(); }, 3000);
+  }
+
+  async stopBroadcast() {
+    this.broadcastStopping = true;
+    this.cdr.detectChanges();
+    await this.adminService.stopAnnouncement();
+    this.broadcastStopping = false;
+    this.currentAnnouncement = null;
+    this.cdr.detectChanges();
+  }
+
+  getRemainingTimeString(expiresAtIso: string): string {
+    if (!expiresAtIso) return 'No Expiration';
+    const diff = new Date(expiresAtIso).getTime() - Date.now();
+    if (diff <= 0) return 'Expired';
+    const mins = Math.floor(diff / (1000 * 60));
+    const hrs = Math.floor(mins / 60);
+    if (hrs >= 1) {
+      const remainingMins = mins % 60;
+      return `${hrs}h ${remainingMins}m remaining`;
+    }
+    return `${mins}m remaining`;
   }
 
   // ── KEYBOARD SHORTCUT (Ctrl+Shift+A) ──────────────────────────────────────

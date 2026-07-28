@@ -1262,6 +1262,14 @@ $text-muted:   #64748b;
   display: flex;
   flex-direction: column;
   gap: 14px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
 }
 
 .settings-card-header {
@@ -1287,15 +1295,122 @@ $text-muted:   #64748b;
   }
 }
 
-.broadcast-textarea {
+// Active Broadcast Status Box inside Card
+.active-broadcast-status {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .status-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .live-pulse-dot {
+      width: 10px;
+      height: 10px;
+      background-color: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulse-dot 1.5s infinite;
+    }
+
+    .status-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #6ee7b7;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  .active-msg-preview {
+    font-size: 0.88rem;
+    color: $text-primary;
+    line-height: 1.4;
+    word-break: break-word;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 8px 12px;
+    border-radius: 6px;
+    border-left: 3px solid #10b981;
+  }
+
+  .status-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: $text-muted;
+  }
+
+  .stop-broadcast-btn {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #fca5a5;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 2px;
+
+    &:hover:not(:disabled) {
+      background: #ef4444;
+      color: white;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+@keyframes pulse-dot {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.broadcast-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   width: 100%;
+
+  label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: $text-muted;
+  }
+}
+
+.broadcast-textarea, .broadcast-select, .broadcast-input {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
   background: $bg-input;
   border: 1px solid $border;
   border-radius: 10px;
-  padding: 12px 14px;
+  padding: 10px 14px;
   color: $text-primary;
   font-size: 0.88rem;
-  resize: vertical;
   outline: none;
   font-family: inherit;
   line-height: 1.5;
@@ -1303,6 +1418,16 @@ $text-muted:   #64748b;
 
   &::placeholder { color: $text-muted; }
   &:focus { border-color: $blue; box-shadow: 0 0 0 3px $blue-glow; }
+}
+
+.broadcast-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.broadcast-select {
+  cursor: pointer;
+  appearance: auto;
 }
 
 .broadcast-success {
