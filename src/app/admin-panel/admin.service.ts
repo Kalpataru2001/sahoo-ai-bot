@@ -84,8 +84,13 @@ export class AdminService {
     return this.authService.adminDeleteUserData(uid);
   }
 
-  async broadcastAnnouncement(message: string, durationMinutes?: number | null): Promise<void> {
-    return this.authService.adminBroadcastAnnouncement(message, durationMinutes);
+  async broadcastAnnouncement(
+    message: string, 
+    durationMinutes?: number | null,
+    customStartAt?: string | null,
+    customExpiresAt?: string | null
+  ): Promise<void> {
+    return this.authService.adminBroadcastAnnouncement(message, durationMinutes, customStartAt, customExpiresAt);
   }
 
   async stopAnnouncement(): Promise<void> {

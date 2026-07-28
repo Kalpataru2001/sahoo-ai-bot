@@ -55,6 +55,7 @@ export interface UserMemory {
 export interface AnnouncementData {
   message: string;
   createdAt: string;
+  startAt?: string | null;
   expiresAt?: string | null;
   active: boolean;
   stoppedAt?: string | null;
@@ -360,17 +361,27 @@ export class AuthService {
     }
   }
 
-  async adminBroadcastAnnouncement(message: string, durationMinutes?: number | null): Promise<void> {
+  async adminBroadcastAnnouncement(
+    message: string, 
+    durationMinutes?: number | null,
+    customStartAt?: string | null,
+    customExpiresAt?: string | null
+  ): Promise<void> {
     try {
       const announcementRef = doc(this.db, 'admin', 'announcements');
       const createdAt = new Date();
-      let expiresAt: string | null = null;
-      if (durationMinutes && durationMinutes > 0) {
-        expiresAt = new Date(createdAt.getTime() + durationMinutes * 60 * 1000).toISOString();
+      let startAt: string | null = customStartAt || null;
+      let expiresAt: string | null = customExpiresAt || null;
+
+      if (!customExpiresAt && durationMinutes && durationMinutes > 0) {
+        const baseTime = customStartAt ? new Date(customStartAt) : createdAt;
+        expiresAt = new Date(baseTime.getTime() + durationMinutes * 60 * 1000).toISOString();
       }
+
       await setDoc(announcementRef, {
         message,
         createdAt: createdAt.toISOString(),
+        startAt,
         expiresAt,
         active: true
       });

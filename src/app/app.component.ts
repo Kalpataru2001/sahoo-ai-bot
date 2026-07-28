@@ -310,9 +310,10 @@ export class AppComponent implements OnInit {
   showIosInstructions = false;
 
   // Announcement Banner
-  activeAnnouncement: { message: string; createdAt: string; expiresAt?: string | null } | null = null;
+  activeAnnouncement: { message: string; createdAt: string; startAt?: string | null; expiresAt?: string | null } | null = null;
   isAnnouncementDismissed = false;
-  private announcementTimer: any = null;
+  private announcementStartTimer: any = null;
+  private announcementExpiryTimer: any = null;
 
   dismissAnnouncement() {
     this.isAnnouncementDismissed = true;
@@ -328,30 +329,47 @@ export class AppComponent implements OnInit {
 
     // Subscribe to broadcast announcements from Admin Panel
     this.authService.subscribeToAnnouncements((data) => {
-      if (this.announcementTimer) {
-        clearTimeout(this.announcementTimer);
-        this.announcementTimer = null;
-      }
+      if (this.announcementStartTimer) clearTimeout(this.announcementStartTimer);
+      if (this.announcementExpiryTimer) clearTimeout(this.announcementExpiryTimer);
+      this.announcementStartTimer = null;
+      this.announcementExpiryTimer = null;
 
       if (data && data.message) {
-        if (data.expiresAt) {
-          const remainingMs = new Date(data.expiresAt).getTime() - Date.now();
-          if (remainingMs <= 0) {
-            this.activeAnnouncement = null;
-            this.cdr.detectChanges();
-            return;
-          }
-          // Auto-hide when duration expires
-          this.announcementTimer = setTimeout(() => {
-            this.activeAnnouncement = null;
-            this.cdr.detectChanges();
-          }, remainingMs);
+        const now = Date.now();
+        const startMs = data.startAt ? new Date(data.startAt).getTime() - now : 0;
+        const expiryMs = data.expiresAt ? new Date(data.expiresAt).getTime() - now : Infinity;
+
+        // Has already expired?
+        if (expiryMs <= 0) {
+          this.activeAnnouncement = null;
+          this.cdr.detectChanges();
+          return;
         }
 
-        if (!this.activeAnnouncement || this.activeAnnouncement.message !== data.message) {
-          this.isAnnouncementDismissed = false;
+        // Scheduled for future?
+        if (startMs > 0) {
+          this.activeAnnouncement = null;
+          // Set timer to show when startAt time arrives
+          this.announcementStartTimer = setTimeout(() => {
+            this.activeAnnouncement = data;
+            this.isAnnouncementDismissed = false;
+            this.cdr.detectChanges();
+          }, startMs);
+        } else {
+          // Live right now
+          if (!this.activeAnnouncement || this.activeAnnouncement.message !== data.message) {
+            this.isAnnouncementDismissed = false;
+          }
+          this.activeAnnouncement = data;
         }
-        this.activeAnnouncement = data;
+
+        // Set timer to hide when expiresAt time arrives
+        if (expiryMs !== Infinity && expiryMs > 0) {
+          this.announcementExpiryTimer = setTimeout(() => {
+            this.activeAnnouncement = null;
+            this.cdr.detectChanges();
+          }, expiryMs);
+        }
       } else {
         this.activeAnnouncement = null;
       }

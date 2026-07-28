@@ -1310,6 +1310,16 @@ $text-muted:   #64748b;
     align-items: center;
     gap: 8px;
 
+    &.scheduled {
+      .status-title {
+        color: #fde047;
+      }
+    }
+
+    .status-badge-icon {
+      font-size: 14px;
+    }
+
     .live-pulse-dot {
       width: 10px;
       height: 10px;
@@ -1385,6 +1395,18 @@ $text-muted:   #64748b;
   100% {
     transform: scale(0.95);
     box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.date-range-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  width: 100%;
+
+  .field-hint {
+    font-size: 0.76rem;
+    color: $text-muted;
   }
 }
 

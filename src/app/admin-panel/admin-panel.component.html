@@ -485,13 +485,15 @@
 
                 <!-- Currently Running Announcement Status Card -->
                 <div class="active-broadcast-status" *ngIf="currentAnnouncement && currentAnnouncement.active && currentAnnouncement.message">
-                  <div class="status-header">
-                    <span class="live-pulse-dot"></span>
-                    <span class="status-title">Currently Live Broadcast</span>
+                  <div class="status-header" [ngClass]="getBroadcastStatusInfo(currentAnnouncement).state">
+                    <span class="live-pulse-dot" *ngIf="getBroadcastStatusInfo(currentAnnouncement).state === 'live'"></span>
+                    <span class="status-badge-icon" *ngIf="getBroadcastStatusInfo(currentAnnouncement).state === 'scheduled'">📅</span>
+                    <span class="status-title">{{ getBroadcastStatusInfo(currentAnnouncement).label }}</span>
                   </div>
                   <div class="active-msg-preview">{{ currentAnnouncement.message }}</div>
                   <div class="status-meta">
-                    <span>🕒 Posted: {{ formatDate(currentAnnouncement.createdAt) }}</span>
+                    <span *ngIf="currentAnnouncement.startAt">🚀 Start: {{ formatDate(currentAnnouncement.startAt) }}</span>
+                    <span *ngIf="!currentAnnouncement.startAt">🕒 Posted: {{ formatDate(currentAnnouncement.createdAt) }}</span>
                     <span>⏳ {{ getRemainingTimeString(currentAnnouncement.expiresAt) }}</span>
                   </div>
                   <button class="stop-broadcast-btn" (click)="stopBroadcast()" [disabled]="broadcastStopping">
@@ -511,7 +513,7 @@
                 </div>
 
                 <div class="broadcast-form-group">
-                  <label for="broadcastDuration">Display Duration (Time-Based Expiration)</label>
+                  <label for="broadcastDuration">Display Duration & Timing Schedule</label>
                   <select id="broadcastDuration" [(ngModel)]="broadcastDurationMinutes" class="broadcast-select">
                     <option [ngValue]="null">♾️ No Expiration (Runs until manually stopped)</option>
                     <option [ngValue]="15">⏱️ 15 Minutes</option>
@@ -519,9 +521,11 @@
                     <option [ngValue]="360">⏱️ 6 Hours</option>
                     <option [ngValue]="1440">⏱️ 24 Hours (1 Day)</option>
                     <option [ngValue]="-1">⚙️ Custom Duration (in Minutes)</option>
+                    <option [ngValue]="-2">📅 Custom Date & Time Range (From / To)</option>
                   </select>
                 </div>
 
+                <!-- Custom Duration in Minutes -->
                 <div class="broadcast-form-group" *ngIf="broadcastDurationMinutes === -1">
                   <label for="customDuration">Custom Duration (Minutes)</label>
                   <input
@@ -532,6 +536,30 @@
                     class="broadcast-input"
                     placeholder="e.g. 30"
                   />
+                </div>
+
+                <!-- Custom Start & End Date & Time Range -->
+                <div class="date-range-grid" *ngIf="broadcastDurationMinutes === -2">
+                  <div class="broadcast-form-group">
+                    <label for="customStart">Start Date & Time (From)</label>
+                    <input
+                      id="customStart"
+                      type="datetime-local"
+                      [(ngModel)]="customStartDateTime"
+                      class="broadcast-input"
+                    />
+                    <small class="field-hint">Leave blank to start immediately</small>
+                  </div>
+                  <div class="broadcast-form-group">
+                    <label for="customEnd">End Date & Time (To / Expiration)</label>
+                    <input
+                      id="customEnd"
+                      type="datetime-local"
+                      [(ngModel)]="customEndDateTime"
+                      class="broadcast-input"
+                    />
+                    <small class="field-hint">Leave blank for no expiration</small>
+                  </div>
                 </div>
 
                 <div class="broadcast-success" *ngIf="broadcastSent">✅ Announcement broadcasted to all users!</div>

@@ -63,8 +63,10 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
 
   // ── SETTINGS & ANNOUNCEMENT STATE ──────────────────────────────────────────
   broadcastMessage = '';
-  broadcastDurationMinutes: number | null = null; // null = indefinite
+  broadcastDurationMinutes: number | null = null; // null = indefinite, -1 = custom duration mins, -2 = custom start & end datetime range
   customDurationInput = 30;
+  customStartDateTime = '';
+  customEndDateTime = '';
   broadcastSent = false;
   broadcastLoading = false;
   broadcastStopping = false;
@@ -306,13 +308,30 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
 
     let duration: number | null = null;
-    if (this.broadcastDurationMinutes === -1) {
+    let customStartAt: string | null = null;
+    let customExpiresAt: string | null = null;
+
+    if (this.broadcastDurationMinutes === -2) {
+      // Custom Date & Time Range
+      if (this.customStartDateTime) {
+        customStartAt = new Date(this.customStartDateTime).toISOString();
+      }
+      if (this.customEndDateTime) {
+        customExpiresAt = new Date(this.customEndDateTime).toISOString();
+      }
+    } else if (this.broadcastDurationMinutes === -1) {
       duration = Math.max(1, this.customDurationInput || 30);
     } else if (typeof this.broadcastDurationMinutes === 'number') {
       duration = this.broadcastDurationMinutes;
     }
 
-    await this.adminService.broadcastAnnouncement(this.broadcastMessage.trim(), duration);
+    await this.adminService.broadcastAnnouncement(
+      this.broadcastMessage.trim(), 
+      duration, 
+      customStartAt, 
+      customExpiresAt
+    );
+
     this.broadcastLoading = false;
     this.broadcastSent = true;
     this.broadcastMessage = '';
@@ -327,6 +346,26 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
     this.broadcastStopping = false;
     this.currentAnnouncement = null;
     this.cdr.detectChanges();
+  }
+
+  getBroadcastStatusInfo(announcement: any): { state: 'live' | 'scheduled' | 'expired'; label: string } {
+    if (!announcement || !announcement.active) {
+      return { state: 'expired', label: 'Inactive' };
+    }
+    const now = Date.now();
+    const startMs = announcement.startAt ? new Date(announcement.startAt).getTime() - now : 0;
+    const expiryMs = announcement.expiresAt ? new Date(announcement.expiresAt).getTime() - now : Infinity;
+
+    if (expiryMs <= 0) {
+      return { state: 'expired', label: 'Expired' };
+    }
+    if (startMs > 0) {
+      const mins = Math.ceil(startMs / (1000 * 60));
+      const hrs = Math.floor(mins / 60);
+      const timeStr = hrs >= 1 ? `${hrs}h ${mins % 60}m` : `${mins}m`;
+      return { state: 'scheduled', label: `Scheduled (Starts in ${timeStr})` };
+    }
+    return { state: 'live', label: 'Currently Live' };
   }
 
   getRemainingTimeString(expiresAtIso: string): string {
