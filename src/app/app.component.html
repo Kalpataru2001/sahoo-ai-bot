@@ -117,34 +117,77 @@
         <div *ngFor="let msg of messages; let i = index" class="message-row"
           [ngClass]="{'user-row': msg.role === 'user', 'bot-row': msg.role === 'bot'}">
           <div class="message-content-box">
-            <div class="message-bubble" [ngClass]="msg.role" [innerHTML]="renderMarkdown(msg.text)"></div>
-            <div class="message-actions">
-              <button class="copy-msg-btn" (click)="copyMessageText(msg.text, i)" [title]="copiedMsgIndex === i ? 'Copied to Clipboard!' : 'Copy text'">
-                <ng-container *ngIf="copiedMsgIndex === i; else copyIcon">
-                  <span class="copied-badge">✓ Copied</span>
-                </ng-container>
-                <ng-template #copyIcon>
+
+            <!-- ── INLINE EDIT FORM (user messages only, when editing this index) ── -->
+            <ng-container *ngIf="msg.role === 'user' && editingMessageIndex === i; else normalBubble">
+              <div class="edit-message-form">
+                <textarea
+                  [id]="'edit-textarea-' + i"
+                  [(ngModel)]="editingMessageText"
+                  class="edit-textarea"
+                  rows="2"
+                  (keydown.escape)="cancelEditMessage()"
+                ></textarea>
+                <div class="edit-actions">
+                  <button class="edit-save-btn" (click)="saveAndResendMessage(i)" [disabled]="!editingMessageText.trim()">
+                    ✅ Save &amp; Resend
+                  </button>
+                  <button class="edit-cancel-btn" (click)="cancelEditMessage()">✕ Cancel</button>
+                </div>
+              </div>
+            </ng-container>
+
+            <!-- ── NORMAL MESSAGE BUBBLE ── -->
+            <ng-template #normalBubble>
+              <div class="message-bubble" [ngClass]="msg.role" [innerHTML]="renderMarkdown(msg.text)"></div>
+              <div class="message-actions">
+                <!-- Copy button (all messages) -->
+                <button class="copy-msg-btn" (click)="copyMessageText(msg.text, i)" [title]="copiedMsgIndex === i ? 'Copied to Clipboard!' : 'Copy text'">
+                  <ng-container *ngIf="copiedMsgIndex === i; else copyIcon">
+                    <span class="copied-badge">✓ Copied</span>
+                  </ng-container>
+                  <ng-template #copyIcon>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    <span>Copy</span>
+                  </ng-template>
+                </button>
+                <!-- Edit button — user messages only, not while loading -->
+                <button class="edit-msg-btn" *ngIf="msg.role === 'user' && !isLoading" (click)="startEditMessage(i)" title="Edit message">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                   </svg>
-                  <span>Copy</span>
-                </ng-template>
-              </button>
-              <!-- Share button — only for bot messages -->
-              <button class="share-msg-btn" *ngIf="msg.role === 'bot'" (click)="shareMessage(msg.text)" title="Share this message">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="18" cy="5" r="3"></circle>
-                  <circle cx="6" cy="12" r="3"></circle>
-                  <circle cx="18" cy="19" r="3"></circle>
-                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-                </svg>
-                <span>Share</span>
-              </button>
-            </div>
+                  <span>Edit</span>
+                </button>
+                <!-- Share button — bot messages only -->
+                <button class="share-msg-btn" *ngIf="msg.role === 'bot'" (click)="shareMessage(msg.text)" title="Share this message">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="18" cy="5" r="3"></circle>
+                    <circle cx="6" cy="12" r="3"></circle>
+                    <circle cx="18" cy="19" r="3"></circle>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                  </svg>
+                  <span>Share</span>
+                </button>
+                <!-- Regenerate — last bot message only, not while loading -->
+                <button class="regen-btn" *ngIf="msg.role === 'bot' && i === messages.length - 1 && !isLoading" (click)="regenerateLastResponse()" title="Regenerate response">
+                  <svg class="regen-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                  </svg>
+                  <span>Regenerate</span>
+                </button>
+              </div>
+            </ng-template>
+
           </div>
         </div>
+
 
         <div class="message-row bot-row" *ngIf="isLoading">
           <div class="message-bubble bot typing-indicator">

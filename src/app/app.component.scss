@@ -608,6 +608,126 @@ header {
       background: rgba(124, 58, 237, 0.08);
     }
   }
+
+  // ── ✏️ Edit button (user messages) ──────────────────────────────────────────
+  .edit-msg-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+
+    &:hover {
+      color: #f59e0b;
+      background: rgba(245, 158, 11, 0.1);
+    }
+  }
+
+  // ── 🔄 Regenerate button (last bot message) ─────────────────────────────────
+  .regen-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+
+    &:hover {
+      color: #10b981;
+      background: rgba(16, 185, 129, 0.1);
+
+      .regen-icon {
+        animation: spin-once 0.5s ease;
+      }
+    }
+  }
+}
+
+@keyframes spin-once {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+// ── Inline Edit Form ──────────────────────────────────────────────────────────
+.edit-message-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 480px;
+
+  .edit-textarea {
+    width: 100%;
+    background: rgba(30, 40, 60, 0.85);
+    border: 1.5px solid #f59e0b;
+    border-radius: 12px;
+    padding: 10px 14px;
+    color: #f1f5f9;
+    font-size: 0.93rem;
+    font-family: inherit;
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 60px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+
+    &:focus {
+      border-color: #fbbf24;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+    }
+  }
+
+  .edit-actions {
+    display: flex;
+    gap: 8px;
+
+    .edit-save-btn {
+      padding: 6px 14px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+
+      &:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+      &:disabled { opacity: 0.4; cursor: not-allowed; }
+    }
+
+    .edit-cancel-btn {
+      padding: 6px 12px;
+      background: transparent;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 8px;
+      color: #94a3b8;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover {
+        border-color: #ef4444;
+        color: #ef4444;
+        background: rgba(239, 68, 68, 0.08);
+      }
+    }
+  }
 }
 
 // --- SHARE BUTTON IN HEADER ---

@@ -19,6 +19,7 @@ interface ChatSession {
   messages: Message[];
 }
 
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -779,9 +780,9 @@ export class AppComponent implements OnInit {
     const userText = this.userInput;
     this.messages.push({ role: 'user', text: userText });
     this.saveChats();
-    this.userInput = ''; 
+    this.userInput = '';
     this.isLoading = true;
-    
+
     // Reset textarea height after sending
     setTimeout(() => {
       const textarea = document.querySelector('.input-wrapper textarea') as HTMLTextAreaElement;
@@ -790,29 +791,34 @@ export class AppComponent implements OnInit {
       }
       this.scrollToBottom();
     }, 60);
-    
+
     if (this.isVoiceMode) {
       this.currentVoiceText = 'Thinking...';
     }
 
+    this.dispatchToGemini(userText);
+  }
+
+  /** Shared HTTP core used by sendMessage, saveAndResendMessage, and regenerateLastResponse. */
+  private dispatchToGemini(userText: string) {
     const userName = this.getUserFirstName();
     const userFullName = this.getUserFullName();
 
     let geminiHistory = this.messages
       .filter(m => m.text !== 'Backend is sleeping!' && m.text !== 'Connection Error.')
-      .slice(0, -1) 
-      .slice(-10)   
+      .slice(0, -1)
+      .slice(-10)
       .map(m => ({
         role: m.role === 'bot' ? 'model' : 'user',
         parts: [{ text: m.text }]
       }));
-      while (geminiHistory.length > 0 && geminiHistory[0].role === 'model') {
+    while (geminiHistory.length > 0 && geminiHistory[0].role === 'model') {
       geminiHistory.shift();
     }
 
     const memoryFacts = this.userMemories.map(m => m.fact);
 
-    this.http.post<{reply: string}>('https://sahoo-ai-proxy-us.onrender.com/api/chat', { 
+    this.http.post<{reply: string}>('https://sahoo-ai-proxy-us.onrender.com/api/chat', {
       message: userText,
       history: geminiHistory,
       userName: this.userPrefs.callingName || userName,
@@ -822,33 +828,29 @@ export class AppComponent implements OnInit {
       tone: this.userPrefs.tone || 'friendly',
       memories: memoryFacts,
       systemContext: `The user's name is ${userName}. Address them as ${userName} naturally in conversation when appropriate.`
-    })
-      .subscribe({
-        next: (response) => {
-          this.messages.push({ role: 'bot', text: response.reply });
-          this.saveChats();
-          this.isLoading = false;
-          setTimeout(() => this.scrollToBottom(), 60);
-          if (this.isVoiceMode) {
-            this.speak(response.reply);
-          }
-
-          // Trigger automatic memory extraction from the last exchange (filtered for personal statements)
-          const snippet = `User: ${userText}\nAI: ${response.reply}`;
-          this.extractMemoriesFromConversation(snippet, userText);
-        },
-        error: (err) => {
-          const errorMessage = err.error?.error || 'My backend seems to be sleeping!';
-          
-          this.messages.push({ role: 'bot', text: errorMessage });
-          this.isLoading = false;
-          
-          if (this.isVoiceMode) {
-            this.currentVoiceText = 'Connection Error.';
-          }
-          this.speak(errorMessage);
+    }).subscribe({
+      next: (response) => {
+        this.messages.push({ role: 'bot', text: response.reply });
+        this.saveChats();
+        this.isLoading = false;
+        setTimeout(() => this.scrollToBottom(), 60);
+        if (this.isVoiceMode) {
+          this.speak(response.reply);
         }
-      });
+        // Trigger automatic memory extraction (filtered for personal statements)
+        const snippet = `User: ${userText}\nAI: ${response.reply}`;
+        this.extractMemoriesFromConversation(snippet, userText);
+      },
+      error: (err) => {
+        const errorMessage = err.error?.error || 'My backend seems to be sleeping!';
+        this.messages.push({ role: 'bot', text: errorMessage });
+        this.isLoading = false;
+        if (this.isVoiceMode) {
+          this.currentVoiceText = 'Connection Error.';
+        }
+        this.speak(errorMessage);
+      }
+    });
   }
 
   // --- AUTHENTICATION MODAL CONTROLS ---
@@ -925,6 +927,64 @@ export class AppComponent implements OnInit {
       this.authLoading = false;
       this.cdr.detectChanges();
     }
+  }
+
+  // --- EDIT & REGENERATE ---
+  editingMessageIndex: number | null = null;
+  editingMessageText = '';
+
+  startEditMessage(index: number) {
+    if (this.isLoading) return;
+    this.editingMessageIndex = index;
+    this.editingMessageText = this.messages[index].text;
+    this.cdr.detectChanges();
+    // Focus textarea on next tick
+    setTimeout(() => {
+      const el = document.getElementById('edit-textarea-' + index) as HTMLTextAreaElement;
+      if (el) { el.focus(); el.selectionStart = el.selectionEnd = el.value.length; }
+    }, 30);
+  }
+
+  cancelEditMessage() {
+    this.editingMessageIndex = null;
+    this.editingMessageText = '';
+    this.cdr.detectChanges();
+  }
+
+  saveAndResendMessage(index: number) {
+    const newText = this.editingMessageText.trim();
+    if (!newText || this.isLoading) return;
+
+    // Remove everything from the edited message onwards
+    this.messages = this.messages.slice(0, index);
+    this.editingMessageIndex = null;
+    this.editingMessageText = '';
+
+    // Re-push the user message with edited text, then dispatch to Gemini
+    this.messages.push({ role: 'user', text: newText });
+    this.saveChats();
+    this.isLoading = true;
+    this.cdr.detectChanges();
+    setTimeout(() => this.scrollToBottom(), 60);
+    this.dispatchToGemini(newText);
+  }
+
+  regenerateLastResponse() {
+    if (this.isLoading) return;
+    // Find the last bot message and remove it
+    const lastBotIndex = this.messages.map(m => m.role).lastIndexOf('bot');
+    if (lastBotIndex === -1) return;
+    this.messages = this.messages.slice(0, lastBotIndex);
+
+    // The last remaining message should be the user message to re-send
+    const lastUserMsg = [...this.messages].reverse().find(m => m.role === 'user');
+    if (!lastUserMsg) return;
+
+    this.saveChats();
+    this.isLoading = true;
+    this.cdr.detectChanges();
+    setTimeout(() => this.scrollToBottom(), 60);
+    this.dispatchToGemini(lastUserMsg.text);
   }
 
   // --- COPY TEXT FUNCTIONALITY ---
