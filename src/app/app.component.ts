@@ -2,6 +2,7 @@ import { Component, ElementRef, ViewChild, OnInit, ChangeDetectorRef, HostListen
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { marked } from 'marked';
 import { User } from 'firebase/auth';
@@ -37,6 +38,7 @@ export class AppComponent implements OnInit {
   isDarkMode = true;
   userInput: string = '';
   isLoading = false;
+  private currentRequestSub: Subscription | null = null;
 
   // Auth Variables
   currentUser: User | null = null;
@@ -818,7 +820,7 @@ export class AppComponent implements OnInit {
 
     const memoryFacts = this.userMemories.map(m => m.fact);
 
-    this.http.post<{reply: string}>('https://sahoo-ai-proxy-us.onrender.com/api/chat', {
+    this.currentRequestSub = this.http.post<{reply: string}>('https://sahoo-ai-proxy-us.onrender.com/api/chat', {
       message: userText,
       history: geminiHistory,
       userName: this.userPrefs.callingName || userName,
@@ -830,6 +832,7 @@ export class AppComponent implements OnInit {
       systemContext: `The user's name is ${userName}. Address them as ${userName} naturally in conversation when appropriate.`
     }).subscribe({
       next: (response) => {
+        this.currentRequestSub = null;
         this.messages.push({ role: 'bot', text: response.reply });
         this.saveChats();
         this.isLoading = false;
@@ -842,6 +845,7 @@ export class AppComponent implements OnInit {
         this.extractMemoriesFromConversation(snippet, userText);
       },
       error: (err) => {
+        this.currentRequestSub = null;
         const errorMessage = err.error?.error || 'My backend seems to be sleeping!';
         this.messages.push({ role: 'bot', text: errorMessage });
         this.isLoading = false;
@@ -932,6 +936,32 @@ export class AppComponent implements OnInit {
   // --- EDIT & REGENERATE ---
   editingMessageIndex: number | null = null;
   editingMessageText = '';
+
+  stopGeneration() {
+    if (this.currentRequestSub) {
+      this.currentRequestSub.unsubscribe();
+      this.currentRequestSub = null;
+    }
+    this.isLoading = false;
+    // Remove the last user message that was sent (since the request is cancelled)
+    // and put it back into the input box so they can fix and resend
+    const lastUserMsgIndex = this.messages.map(m => m.role).lastIndexOf('user');
+    if (lastUserMsgIndex !== -1) {
+      this.userInput = this.messages[lastUserMsgIndex].text;
+      this.messages = this.messages.slice(0, lastUserMsgIndex);
+      this.saveChats();
+    }
+    this.cdr.detectChanges();
+    // Restore textarea height
+    setTimeout(() => {
+      const textarea = document.querySelector('.input-wrapper textarea') as HTMLTextAreaElement;
+      if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.min(textarea.scrollHeight, 140) + 'px';
+        textarea.focus();
+      }
+    }, 30);
+  }
 
   startEditMessage(index: number) {
     if (this.isLoading) return;

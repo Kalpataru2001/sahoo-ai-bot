@@ -1091,7 +1091,38 @@ header {
       &:not(:disabled):active { transform: scale(0.95); }
       &:not(:disabled):hover { background: #006bce; }
     }
+
+    // ⏹ Stop button — replaces send button while AI is generating
+    .stop-btn {
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+      animation: stop-pulse 1.4s ease-in-out infinite;
+      transition: transform 0.1s, background 0.2s;
+
+      &:hover {
+        background: #dc2626;
+        animation: none;
+        transform: scale(1.05);
+      }
+      &:active { transform: scale(0.92); }
+    }
   }
+}
+
+@keyframes stop-pulse {
+  0%   { box-shadow: 0 0 0 0   rgba(239, 68, 68, 0.55); }
+  60%  { box-shadow: 0 0 0 9px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0   rgba(239, 68, 68, 0); }
 }
 
 // ==========================================

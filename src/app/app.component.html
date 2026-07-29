@@ -204,9 +204,18 @@
             (input)="autoResizeTextarea($event)"
             [placeholder]="'Type a message ' + getUserFirstName() + '...'"
             rows="1"
-            [disabled]="isRecording">
+            [disabled]="isRecording || isLoading">
           </textarea>
-          <button class="icon-btn send-btn" (click)="sendMessage()" [disabled]="!userInput.trim() || isRecording" title="Send Message">
+
+          <!-- Stop button — shown while AI is generating a response -->
+          <button class="icon-btn stop-btn" *ngIf="isLoading" (click)="stopGeneration()" title="Stop generating">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
+            </svg>
+          </button>
+
+          <!-- Send button — shown when not loading -->
+          <button class="icon-btn send-btn" *ngIf="!isLoading" (click)="sendMessage()" [disabled]="!userInput.trim() || isRecording" title="Send Message">
             <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none"
               stroke-linecap="round" stroke-linejoin="round">
               <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -215,6 +224,7 @@
           </button>
         </div>
       </div>
+
     </div>
 
     <button class="fab-voice" *ngIf="!isVoiceMode" (click)="enterVoiceMode()">
