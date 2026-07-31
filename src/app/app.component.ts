@@ -332,6 +332,30 @@ export class AppComponent implements OnInit {
     }
   }
 
+  /**
+   * Same as renderMarkdown but wraps every occurrence of the search query
+   * inside <mark class="search-mark"> tags — only in text nodes, never inside
+   * HTML tag attributes (uses a negative-lookahead to skip inside < ... >).
+   * Not cached — only used on the single highlighted message at a time.
+   */
+  renderMarkdownWithHighlight(text: string): SafeHtml {
+    if (!text) return '';
+    const q = this.chatSearchQuery.trim();
+    if (!q) return this.renderMarkdown(text);
+    try {
+      const html = marked.parse(text, { breaks: true }) as string;
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // Negative lookahead: don't match inside HTML tag bodies (between < and >)
+      const highlighted = html.replace(
+        new RegExp(`(${escaped})(?![^<]*>)`, 'gi'),
+        '<mark class="search-mark">$1</mark>'
+      );
+      return this.sanitizer.bypassSecurityTrustHtml(highlighted);
+    } catch (e) {
+      return this.renderMarkdown(text);
+    }
+  }
+
   toggleSidebarCollapse() {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
   }

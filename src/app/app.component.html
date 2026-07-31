@@ -168,7 +168,11 @@
 
             <!-- ── NORMAL MESSAGE BUBBLE ── -->
             <ng-template #normalBubble>
-              <div class="message-bubble" [ngClass]="msg.role" [innerHTML]="renderMarkdown(msg.text)"></div>
+              <div class="message-bubble" [ngClass]="msg.role"
+                [innerHTML]="highlightedMsgIndex === i && chatSearchQuery
+                  ? renderMarkdownWithHighlight(msg.text)
+                  : renderMarkdown(msg.text)">
+              </div>
               <div class="message-actions">
                 <!-- Copy button (all messages) -->
                 <button class="copy-msg-btn" (click)="copyMessageText(msg.text, i)" [title]="copiedMsgIndex === i ? 'Copied to Clipboard!' : 'Copy text'">
