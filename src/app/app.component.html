@@ -17,29 +17,55 @@
       </button>
     </div>
 
-    <button class="install-app-sidebar-btn" (click)="triggerInstallFromSidebar()" [title]="isSidebarCollapsed ? 'Install Mobile App' : ''">
-      <span class="btn-icon">📲</span>
-      <span class="btn-text">Install Mobile App</span>
-    </button>
+    <!-- CHAT SEARCH (hidden when sidebar is collapsed) -->
+    <div class="chat-search-wrapper" *ngIf="!isSidebarCollapsed">
+      <div class="chat-search-input-row">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input
+          type="text"
+          class="chat-search-input"
+          [(ngModel)]="chatSearchQuery"
+          placeholder="Search chats..."
+          autocomplete="off"
+        />
+        <button class="search-clear-btn" *ngIf="chatSearchQuery" (click)="chatSearchQuery = ''" title="Clear search">✕</button>
+      </div>
+    </div>
 
     <div class="chat-list">
-      <div class="chat-item" 
-           *ngFor="let session of sessions" 
+      <!-- No results empty state -->
+      <div class="search-empty-state" *ngIf="chatSearchQuery && filteredSessions.length === 0">
+        <span>🔍</span>
+        <p>No chats match <strong>"{{ chatSearchQuery }}"</strong></p>
+      </div>
+
+      <div class="chat-item"
+           *ngFor="let session of filteredSessions"
            [class.active]="session.id === currentSessionId"
            (click)="selectChat(session.id)"
            [title]="session.title">
-           
+
         <span class="chat-icon">💬</span>
-        <span class="chat-title">{{ session.title }}</span>
-        
+        <div class="chat-item-text">
+          <span class="chat-title" [innerHTML]="highlightMatch(session.title)"></span>
+          <span class="chat-snippet" *ngIf="getMatchSnippet(session)" [innerHTML]="highlightMatch(getMatchSnippet(session))"></span>
+        </div>
+
         <button class="delete-btn" (click)="openDeleteModal($event, session.id)" title="Delete Chat">✕</button>
       </div>
     </div>
 
     <!-- SIDEBAR SETTINGS BUTTON -->
+    <button class="install-app-sidebar-btn" (click)="triggerInstallFromSidebar()" [title]="isSidebarCollapsed ? 'Install Mobile App' : ''">
+      <span class="btn-icon">📲</span>
+      <span class="btn-text">Install Mobile App</span>
+    </button>
     <button class="settings-btn-sidebar" (click)="openSettingsModal()" [title]="isSidebarCollapsed ? 'Settings & Preferences' : ''">
       <span class="btn-icon">⚙️</span>
-      <span class="btn-text">Settings & Preferences</span>
+      <span class="btn-text">Settings &amp; Preferences</span>
     </button>
 
     <!-- SIDEBAR USER PROFILE FOOTER -->

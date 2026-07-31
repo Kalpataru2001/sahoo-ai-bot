@@ -38,6 +38,39 @@ export class AppComponent implements OnInit {
   isDarkMode = true;
   userInput: string = '';
   isLoading = false;
+
+  // ── Chat Search ────────────────────────────────────────────────────────────
+  chatSearchQuery = '';
+
+  get filteredSessions(): ChatSession[] {
+    const q = this.chatSearchQuery.trim().toLowerCase();
+    if (!q) return this.sessions;
+    return this.sessions.filter(s => {
+      const titleMatch = s.title.toLowerCase().includes(q);
+      const msgMatch = s.messages.some(m => m.text.toLowerCase().includes(q));
+      return titleMatch || msgMatch;
+    });
+  }
+
+  /** Returns HTML with the query keyword wrapped in <mark> for highlighting. */
+  highlightMatch(text: string): string {
+    const q = this.chatSearchQuery.trim();
+    if (!q) return text;
+    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return text.replace(new RegExp(`(${escaped})`, 'gi'), '<mark>$1</mark>');
+  }
+
+  /** Returns a short snippet from the first matching message body. */
+  getMatchSnippet(session: ChatSession): string {
+    const q = this.chatSearchQuery.trim().toLowerCase();
+    if (!q) return '';
+    const matchingMsg = session.messages.find(m => m.text.toLowerCase().includes(q));
+    if (!matchingMsg) return '';
+    const idx = matchingMsg.text.toLowerCase().indexOf(q);
+    const start = Math.max(0, idx - 25);
+    const raw = matchingMsg.text.substring(start, idx + q.length + 40).replace(/\n/g, ' ');
+    return (start > 0 ? '...' : '') + raw + (raw.length < matchingMsg.text.length - start ? '...' : '');
+  }
   private currentRequestSub: Subscription | null = null;
 
   // Auth Variables

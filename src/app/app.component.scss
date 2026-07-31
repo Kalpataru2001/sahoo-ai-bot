@@ -141,23 +141,90 @@ html, body {
     }
   }
 
+  // ── Chat Search ────────────────────────────────────────────────────────────
+  .chat-search-wrapper {
+    margin-bottom: 6px;
+    padding: 0 2px;
+
+    .chat-search-input-row {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 6px 10px;
+      gap: 7px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+
+      &:focus-within {
+        border-color: rgba(0, 132, 255, 0.5);
+        box-shadow: 0 0 0 3px rgba(0, 132, 255, 0.12);
+      }
+
+      .search-icon {
+        color: #64748b;
+        flex-shrink: 0;
+      }
+
+      .chat-search-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: #e2e8f0;
+        font-size: 0.83rem;
+        font-family: inherit;
+
+        &::placeholder { color: #475569; }
+      }
+
+      .search-clear-btn {
+        background: none;
+        border: none;
+        color: #475569;
+        font-size: 0.78rem;
+        cursor: pointer;
+        padding: 0 2px;
+        line-height: 1;
+        transition: color 0.15s;
+        flex-shrink: 0;
+
+        &:hover { color: #ef4444; }
+      }
+    }
+  }
+
   .chat-list {
     flex: 1;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
 
     // Custom Scrollbar for sidebar
     &::-webkit-scrollbar { width: 5px; }
     &::-webkit-scrollbar-thumb { background: #ccc; border-radius: 5px; }
+
+    .search-empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 24px 12px;
+      color: #475569;
+      font-size: 0.82rem;
+      text-align: center;
+
+      span { font-size: 1.6rem; }
+      strong { color: #94a3b8; }
+    }
   }
 
   .chat-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 14px;
+    padding: 10px 12px;
     border-radius: 10px;
     cursor: pointer;
     background: transparent;
@@ -169,12 +236,45 @@ html, body {
       display: none; // Hidden in expanded state
     }
 
-    .chat-title {
+    .chat-item-text {
       flex: 1;
+      min-width: 0; // Allow text to shrink & truncate
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .chat-title {
+      display: block;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      padding-right: 10px;
+      font-size: 0.88rem;
+
+      mark {
+        background: rgba(251, 191, 36, 0.35);
+        color: inherit;
+        border-radius: 2px;
+        padding: 0 1px;
+        font-weight: 700;
+      }
+    }
+
+    .chat-snippet {
+      display: block;
+      font-size: 0.75rem;
+      color: #64748b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+      mark {
+        background: rgba(251, 191, 36, 0.3);
+        color: #94a3b8;
+        border-radius: 2px;
+        padding: 0 1px;
+        font-weight: 600;
+      }
     }
 
     .delete-btn {
@@ -185,6 +285,7 @@ html, body {
       font-size: 1.1rem;
       opacity: 0; // Hidden by default for a clean look!
       transition: opacity 0.2s, color 0.2s;
+      flex-shrink: 0;
 
       &:hover { color: #ff4d4f; } // Turns red when hovered
     }
