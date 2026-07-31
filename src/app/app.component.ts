@@ -41,6 +41,7 @@ export class AppComponent implements OnInit {
 
   // ── Chat Search ────────────────────────────────────────────────────────────
   chatSearchQuery = '';
+  highlightedMsgIndex: number | null = null;
 
   get filteredSessions(): ChatSession[] {
     const q = this.chatSearchQuery.trim().toLowerCase();
@@ -553,9 +554,57 @@ export class AppComponent implements OnInit {
     if (session) {
       this.messages = session.messages;
     }
+    this.highlightedMsgIndex = null;
     this.isSidebarOpen = false; // Auto-close sidebar on mobile after clicking
     this.saveChats();
     setTimeout(() => this.scrollToBottom(), 60);
+  }
+
+  /** Called from search results — switches chat AND scrolls/highlights the matching message. */
+  selectChatFromSearch(id: number) {
+    const q = this.chatSearchQuery.trim().toLowerCase();
+
+    // No active search — behave like a normal chat switch
+    if (!q) {
+      this.selectChat(id);
+      return;
+    }
+
+    // Switch to the session
+    this.currentSessionId = id;
+    const session = this.sessions.find(s => s.id === id);
+    if (session) {
+      this.messages = session.messages;
+    }
+    this.highlightedMsgIndex = null;
+    this.isSidebarOpen = false;
+    this.saveChats();
+    this.cdr.detectChanges();
+
+    // Find the first message index that matches the query
+    const matchIdx = this.messages.findIndex(m => m.text.toLowerCase().includes(q));
+
+    if (matchIdx === -1) {
+      // No message body match — title-only match, just scroll to bottom
+      setTimeout(() => this.scrollToBottom(), 60);
+      return;
+    }
+
+    // Wait for Angular to render the new messages, then scroll & highlight
+    setTimeout(() => {
+      const msgEl = document.getElementById('msg-' + matchIdx);
+      if (msgEl) {
+        msgEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      this.highlightedMsgIndex = matchIdx;
+      this.cdr.detectChanges();
+
+      // Clear highlight after 2.5s
+      setTimeout(() => {
+        this.highlightedMsgIndex = null;
+        this.cdr.detectChanges();
+      }, 2500);
+    }, 80);
   }
 
   saveChats() {

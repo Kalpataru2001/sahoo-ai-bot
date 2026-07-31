@@ -45,7 +45,7 @@
       <div class="chat-item"
            *ngFor="let session of filteredSessions"
            [class.active]="session.id === currentSessionId"
-           (click)="selectChat(session.id)"
+           (click)="selectChatFromSearch(session.id)"
            [title]="session.title">
 
         <span class="chat-icon">💬</span>
@@ -140,8 +140,11 @@
       </div>
 
       <div class="chat-box" #scrollMe>
-        <div *ngFor="let msg of messages; let i = index" class="message-row"
-          [ngClass]="{'user-row': msg.role === 'user', 'bot-row': msg.role === 'bot'}">
+        <div *ngFor="let msg of messages; let i = index"
+          [id]="'msg-' + i"
+          class="message-row"
+          [ngClass]="{'user-row': msg.role === 'user', 'bot-row': msg.role === 'bot'}"
+          [class.search-highlight]="highlightedMsgIndex === i">
           <div class="message-content-box">
 
             <!-- ── INLINE EDIT FORM (user messages only, when editing this index) ── -->
