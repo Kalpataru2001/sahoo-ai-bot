@@ -492,8 +492,8 @@ header {
       .header-status-row {
         display: flex;
         align-items: center;
-        gap: 8px;
-        flex-wrap: nowrap;
+        gap: 6px;
+        flex-wrap: wrap;
       }
 
       .status { font-size: 0.85rem; color: #4caf50; font-weight: 500; }

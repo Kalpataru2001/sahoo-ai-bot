@@ -43,7 +43,8 @@ export interface UserPreferences {
   occupation?: string;
   tone?: string;
   interests?: string;
-  persona?: string;   // Selected AI persona id, e.g. 'coding', 'study', 'default'
+  persona?: string;     // Legacy single persona string
+  personas?: string[];  // Multi-persona selection array, e.g. ['coding', 'study']
 }
 
 export interface UserMemory {

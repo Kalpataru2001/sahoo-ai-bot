@@ -139,7 +139,8 @@ export class AppComponent implements OnInit {
     occupation: '',
     tone: 'Friendly & Casual',
     interests: '',
-    persona: 'default'
+    persona: 'default',
+    personas: ['default']
   };
 
   // ── AI Personas ─────────────────────────────────────────────────────────────
@@ -187,6 +188,58 @@ export class AppComponent implements OnInit {
       prompt: 'You are a calm and empathetic Wellness Guide. Focus on mental health, mindfulness, stress management, and healthy habits. Speak gently and non-judgmentally, validate feelings, and offer practical self-care and well-being suggestions.'
     }
   ];
+
+  /** Returns array of currently selected persona IDs (migrating legacy single persona if needed). */
+  getSelectedPersonaIds(): string[] {
+    if (Array.isArray(this.userPrefs.personas) && this.userPrefs.personas.length > 0) {
+      return this.userPrefs.personas;
+    }
+    if (this.userPrefs.persona && this.userPrefs.persona !== 'default') {
+      return [this.userPrefs.persona];
+    }
+    return ['default'];
+  }
+
+  /** Check if a persona ID is currently selected. */
+  isPersonaSelected(id: string): boolean {
+    const ids = this.getSelectedPersonaIds();
+    return ids.includes(id);
+  }
+
+  /** Toggle a persona ON or OFF. */
+  togglePersona(id: string) {
+    let ids = [...this.getSelectedPersonaIds()];
+
+    if (id === 'default') {
+      // Selecting default clears all other personas
+      this.userPrefs.personas = ['default'];
+      this.userPrefs.persona = 'default';
+      return;
+    }
+
+    // Remove 'default' when a specific persona is clicked
+    ids = ids.filter(pId => pId !== 'default');
+
+    if (ids.includes(id)) {
+      ids = ids.filter(pId => pId !== id);
+    } else {
+      ids.push(id);
+    }
+
+    if (ids.length === 0) {
+      ids = ['default'];
+    }
+
+    this.userPrefs.personas = ids;
+    this.userPrefs.persona = ids.join('+');
+  }
+
+  /** Returns array of active non-default Persona objects. */
+  get activePersonas() {
+    const ids = this.getSelectedPersonaIds();
+    if (ids.includes('default') && ids.length === 1) return [];
+    return this.personas.filter(p => p.id !== 'default' && ids.includes(p.id));
+  }
 
   get activePersona() {
     const id = this.userPrefs.persona || 'default';
@@ -977,10 +1030,19 @@ export class AppComponent implements OnInit {
     }
 
     const memoryFacts = this.userMemories.map(m => m.fact);
-    const personaPrompt = this.activePersona?.prompt || '';
+    const activePersonas = this.activePersonas;
+    let personaContext = '';
+
+    if (activePersonas.length === 1) {
+      personaContext = activePersonas[0].prompt;
+    } else if (activePersonas.length > 1) {
+      personaContext = `You are acting as a hybrid assistant combining the following roles simultaneously:\n` +
+        activePersonas.map(p => `- ${p.name}: ${p.prompt}`).join('\n');
+    }
+
     const systemContext = [
       `The user's name is ${userName}. Address them as ${userName} naturally in conversation when appropriate.`,
-      personaPrompt
+      personaContext
     ].filter(Boolean).join('\n\n');
 
     this.currentRequestSub = this.http.post<{reply: string}>('https://sahoo-ai-proxy-us.onrender.com/api/chat', {

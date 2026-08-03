@@ -102,9 +102,9 @@
             <h2>AI Companion</h2>
             <div class="header-status-row">
               <span class="status">Online</span>
-              <!-- Active persona badge — hidden when default -->
-              <span class="persona-badge" *ngIf="activePersona.id !== 'default'" [title]="'Persona: ' + activePersona.name">
-                {{ activePersona.icon }} {{ activePersona.name }}
+              <!-- Active persona badges — hidden when default -->
+              <span class="persona-badge" *ngFor="let p of activePersonas" [title]="'Persona: ' + p.name">
+                {{ p.icon }} {{ p.name }}
               </span>
             </div>
           </div>
@@ -399,22 +399,22 @@
       <div class="modal-body" *ngIf="activeSettingsTab === 'preferences'">
         <p class="modal-subtitle">Personalize how AI Companion talks to you and tailors responses to your background.</p>
 
-        <!-- ── AI PERSONA SELECTION ─────────────────────────────── -->
+        <!-- ── AI PERSONA SELECTION (MULTI-SELECT) ─────────────────────────────── -->
         <div class="settings-section">
-          <label class="section-label">🤖 Choose AI Persona</label>
-          <p class="section-hint">Each persona changes how the AI thinks, responds, and focuses. Your choice is saved automatically.</p>
+          <label class="section-label">🤖 Choose AI Personas (Combine Multiple)</label>
+          <p class="section-hint">Select one or combine multiple personas to create a hybrid AI personality! Click to toggle.</p>
           <div class="persona-grid">
             <div class="persona-card"
               *ngFor="let p of personas"
-              [class.selected]="userPrefs.persona === p.id"
-              (click)="userPrefs.persona = p.id"
+              [class.selected]="isPersonaSelected(p.id)"
+              (click)="togglePersona(p.id)"
               [title]="p.name">
               <span class="persona-icon">{{ p.icon }}</span>
               <div class="persona-info">
                 <span class="persona-name">{{ p.name }}</span>
                 <span class="persona-desc">{{ p.desc }}</span>
               </div>
-              <span class="persona-check" *ngIf="userPrefs.persona === p.id">✓</span>
+              <span class="persona-check" *ngIf="isPersonaSelected(p.id)">✓</span>
             </div>
           </div>
         </div>
