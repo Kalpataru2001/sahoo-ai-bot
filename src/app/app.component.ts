@@ -813,7 +813,15 @@ export class AppComponent implements OnInit {
   }
 
   toggleTheme() {
-    this.isDarkMode = !this.isDarkMode;
+    const layoutEl = document.querySelector('.app-layout') as HTMLElement;
+    if (layoutEl) {
+      layoutEl.classList.add('theme-transitioning');
+      this.isDarkMode = !this.isDarkMode;
+      // Remove the transitioning class after animation completes (400ms > 350ms CSS transition)
+      setTimeout(() => layoutEl.classList.remove('theme-transitioning'), 400);
+    } else {
+      this.isDarkMode = !this.isDarkMode;
+    }
   }
 
   // --- NEW: VOICE MODE CONTROLS ---
