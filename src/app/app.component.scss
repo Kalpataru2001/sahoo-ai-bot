@@ -558,6 +558,13 @@ header {
   width: fit-content;
   max-width: 82%;
   min-width: 0;
+
+  // When inline editing is active, break out of the bubble's narrow max-width
+  // so the textarea can expand to a comfortable editing width
+  &:has(.edit-message-form) {
+    width: 100%;
+    max-width: 96%;
+  }
 }
 
 .message-row.user-row .message-content-box {
@@ -746,7 +753,9 @@ header {
   .edit-msg-btn {
     background: transparent;
     border: none;
-    color: #94a3b8;
+    // Always visible — not hidden behind hover — so users know every message is editable
+    color: #64748b;
+    opacity: 0.55;
     font-size: 0.76rem;
     font-weight: 600;
     cursor: pointer;
@@ -755,10 +764,11 @@ header {
     gap: 4px;
     padding: 3px 8px;
     border-radius: 6px;
-    transition: color 0.2s, background 0.2s;
+    transition: color 0.2s, background 0.2s, opacity 0.2s;
 
     &:hover {
       color: #f59e0b;
+      opacity: 1;
       background: rgba(245, 158, 11, 0.1);
     }
   }
@@ -798,43 +808,46 @@ header {
 .edit-message-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  max-width: 480px;
+  // Generous min-width so short messages still get a comfortable editing area
+  min-width: min(560px, 85vw);
+  max-width: 100%;
 
   .edit-textarea {
     width: 100%;
-    background: rgba(30, 40, 60, 0.85);
+    background: rgba(20, 30, 50, 0.9);
     border: 1.5px solid #f59e0b;
-    border-radius: 12px;
-    padding: 10px 14px;
+    border-radius: 14px;
+    padding: 12px 16px;
     color: #f1f5f9;
-    font-size: 0.93rem;
+    font-size: 0.95rem;
     font-family: inherit;
-    line-height: 1.5;
+    line-height: 1.6;
     resize: vertical;
-    min-height: 60px;
+    min-height: 80px;
     outline: none;
     transition: border-color 0.2s, box-shadow 0.2s;
     box-sizing: border-box;
 
     &:focus {
       border-color: #fbbf24;
-      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.22);
     }
   }
 
   .edit-actions {
     display: flex;
     gap: 8px;
+    align-items: center;
 
     .edit-save-btn {
-      padding: 6px 14px;
+      padding: 7px 18px;
       background: linear-gradient(135deg, #10b981, #059669);
       border: none;
-      border-radius: 8px;
+      border-radius: 9px;
       color: white;
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       font-weight: 700;
       cursor: pointer;
       transition: opacity 0.2s, transform 0.1s;
@@ -844,12 +857,12 @@ header {
     }
 
     .edit-cancel-btn {
-      padding: 6px 12px;
+      padding: 7px 13px;
       background: transparent;
       border: 1px solid rgba(148, 163, 184, 0.3);
-      border-radius: 8px;
+      border-radius: 9px;
       color: #94a3b8;
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
@@ -859,6 +872,12 @@ header {
         color: #ef4444;
         background: rgba(239, 68, 68, 0.08);
       }
+    }
+
+    .edit-hint {
+      margin-left: auto;
+      font-size: 0.72rem;
+      color: #475569;
     }
   }
 }

@@ -154,7 +154,7 @@
                   [id]="'edit-textarea-' + i"
                   [(ngModel)]="editingMessageText"
                   class="edit-textarea"
-                  rows="2"
+                  rows="3"
                   (keydown.escape)="cancelEditMessage()"
                 ></textarea>
                 <div class="edit-actions">
@@ -162,6 +162,7 @@
                     ✅ Save &amp; Resend
                   </button>
                   <button class="edit-cancel-btn" (click)="cancelEditMessage()">✕ Cancel</button>
+                  <span class="edit-hint">Esc to cancel</span>
                 </div>
               </div>
             </ng-container>
@@ -187,8 +188,8 @@
                     <span>Copy</span>
                   </ng-template>
                 </button>
-                <!-- Edit button — user messages only, not while loading -->
-                <button class="edit-msg-btn" *ngIf="msg.role === 'user' && !isLoading" (click)="startEditMessage(i)" title="Edit message">
+                <!-- Edit button — user messages only, always visible at low opacity, full on hover -->
+                <button class="edit-msg-btn" *ngIf="msg.role === 'user' && !isLoading" (click)="startEditMessage(i)" title="Edit this message">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
