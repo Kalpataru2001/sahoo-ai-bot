@@ -138,8 +138,60 @@ export class AppComponent implements OnInit {
     callingName: '',
     occupation: '',
     tone: 'Friendly & Casual',
-    interests: ''
+    interests: '',
+    persona: 'default'
   };
+
+  // ── AI Personas ─────────────────────────────────────────────────────────────
+  readonly personas = [
+    {
+      id: 'default',
+      icon: '🤖',
+      name: 'AI Companion',
+      desc: 'Balanced & helpful — the classic experience',
+      prompt: ''
+    },
+    {
+      id: 'coding',
+      icon: '💻',
+      name: 'Coding Assistant',
+      desc: 'Technical, precise & code-focused with examples',
+      prompt: 'You are a highly skilled Coding Assistant. Focus on clean code, debugging, and best practices. Always provide runnable code examples when relevant. Be precise, efficient, and explain technical concepts clearly. Prefer showing code over long explanations.'
+    },
+    {
+      id: 'study',
+      icon: '📚',
+      name: 'Study Buddy',
+      desc: 'Patient teacher who breaks complex topics down',
+      prompt: 'You are a patient and encouraging Study Buddy. Break down complex topics into simple, digestible steps. Use analogies, real-world examples, and structured explanations. Celebrate the user\'s curiosity and make learning feel engaging and approachable.'
+    },
+    {
+      id: 'career',
+      icon: '💼',
+      name: 'Career Coach',
+      desc: 'Strategic, professional & goal-oriented advice',
+      prompt: 'You are an experienced Career Coach. Provide strategic and actionable advice on career growth, job searching, interviews, networking, and professional development. Be motivating, realistic, and help the user clarify and achieve their career goals.'
+    },
+    {
+      id: 'creative',
+      icon: '🎨',
+      name: 'Creative Writer',
+      desc: 'Imaginative, expressive & story-driven partner',
+      prompt: 'You are a creative and imaginative writing partner. Help with storytelling, creative writing, poetry, worldbuilding, and brainstorming. Be expressive and vivid in language, suggest creative twists, and inspire the user to bring their ideas to life.'
+    },
+    {
+      id: 'wellness',
+      icon: '🧘',
+      name: 'Wellness Guide',
+      desc: 'Calm, empathetic & mindfulness-focused support',
+      prompt: 'You are a calm and empathetic Wellness Guide. Focus on mental health, mindfulness, stress management, and healthy habits. Speak gently and non-judgmentally, validate feelings, and offer practical self-care and well-being suggestions.'
+    }
+  ];
+
+  get activePersona() {
+    const id = this.userPrefs.persona || 'default';
+    return this.personas.find(p => p.id === id) ?? this.personas[0];
+  }
   userMemories: UserMemory[] = [];
   newMemoryInput = '';
   isExtractingMemories = false;
@@ -925,6 +977,11 @@ export class AppComponent implements OnInit {
     }
 
     const memoryFacts = this.userMemories.map(m => m.fact);
+    const personaPrompt = this.activePersona?.prompt || '';
+    const systemContext = [
+      `The user's name is ${userName}. Address them as ${userName} naturally in conversation when appropriate.`,
+      personaPrompt
+    ].filter(Boolean).join('\n\n');
 
     this.currentRequestSub = this.http.post<{reply: string}>('https://sahoo-ai-proxy-us.onrender.com/api/chat', {
       message: userText,
@@ -935,7 +992,7 @@ export class AppComponent implements OnInit {
       occupation: this.userPrefs.occupation || '',
       tone: this.userPrefs.tone || 'friendly',
       memories: memoryFacts,
-      systemContext: `The user's name is ${userName}. Address them as ${userName} naturally in conversation when appropriate.`
+      systemContext
     }).subscribe({
       next: (response) => {
         this.currentRequestSub = null;

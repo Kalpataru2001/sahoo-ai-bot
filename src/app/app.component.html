@@ -100,7 +100,13 @@
           </div>
           <div class="title">
             <h2>AI Companion</h2>
-            <span class="status">Online</span>
+            <div class="header-status-row">
+              <span class="status">Online</span>
+              <!-- Active persona badge — hidden when default -->
+              <span class="persona-badge" *ngIf="activePersona.id !== 'default'" [title]="'Persona: ' + activePersona.name">
+                {{ activePersona.icon }} {{ activePersona.name }}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -392,6 +398,26 @@
 
       <div class="modal-body" *ngIf="activeSettingsTab === 'preferences'">
         <p class="modal-subtitle">Personalize how AI Companion talks to you and tailors responses to your background.</p>
+
+        <!-- ── AI PERSONA SELECTION ─────────────────────────────── -->
+        <div class="settings-section">
+          <label class="section-label">🤖 Choose AI Persona</label>
+          <p class="section-hint">Each persona changes how the AI thinks, responds, and focuses. Your choice is saved automatically.</p>
+          <div class="persona-grid">
+            <div class="persona-card"
+              *ngFor="let p of personas"
+              [class.selected]="userPrefs.persona === p.id"
+              (click)="userPrefs.persona = p.id"
+              [title]="p.name">
+              <span class="persona-icon">{{ p.icon }}</span>
+              <div class="persona-info">
+                <span class="persona-name">{{ p.name }}</span>
+                <span class="persona-desc">{{ p.desc }}</span>
+              </div>
+              <span class="persona-check" *ngIf="userPrefs.persona === p.id">✓</span>
+            </div>
+          </div>
+        </div>
 
         <div class="form-group">
           <label for="callingName">Preferred Calling Name</label>

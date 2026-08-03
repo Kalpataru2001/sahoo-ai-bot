@@ -43,6 +43,7 @@ export interface UserPreferences {
   occupation?: string;
   tone?: string;
   interests?: string;
+  persona?: string;   // Selected AI persona id, e.g. 'coding', 'study', 'default'
 }
 
 export interface UserMemory {
