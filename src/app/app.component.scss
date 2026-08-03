@@ -1819,9 +1819,10 @@ header {
   animation: slideUp 0.3s ease-out;
   box-sizing: border-box;
 
-  // ── Responsive sizing ──────────────────────────────────────────────────────
-  width: min(580px, 96vw);       // Never wider than the viewport
-  max-height: min(90dvh, 820px); // Never taller than the screen
+  // ── Spacious & Responsive sizing ──────────────────────────────────────────
+  width: min(620px, 94vw);        // Generous width for desktop & mobile
+  height: min(85vh, 740px);       // Explicit height so body never collapses
+  min-height: 480px;              // Guarantees ample height even on smaller screens
 
   // ── Flex column so header/footer are sticky, body scrolls ─────────────────
   display: flex;
@@ -1887,7 +1888,8 @@ header {
 
   // ── Scrollable body ──────────────────────────────────────────────────────
   .modal-body {
-    flex: 1 1 0;
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
     padding: 20px 24px;
