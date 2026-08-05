@@ -10,7 +10,8 @@ import {
   onAuthStateChanged,
   User,
   updateProfile,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  confirmPasswordReset
 } from 'firebase/auth';
 import { 
   getFirestore, 
@@ -150,7 +151,16 @@ export class AuthService {
   }
 
   async sendPasswordReset(email: string): Promise<void> {
-    await sendPasswordResetEmail(this.auth, email);
+    // Redirect back to the app so we handle the reset UI ourselves
+    const actionCodeSettings = {
+      url: window.location.origin + '/',
+      handleCodeInApp: false
+    };
+    await sendPasswordResetEmail(this.auth, email, actionCodeSettings);
+  }
+
+  async confirmPasswordReset(oobCode: string, newPassword: string): Promise<void> {
+    await confirmPasswordReset(this.auth, oobCode, newPassword);
   }
 
   // --- FIRESTORE USER CHAT PERSISTENCE ---

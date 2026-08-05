@@ -448,6 +448,67 @@
     </div>
   </div>
 
+  <!-- IN-APP PASSWORD RESET MODAL (from email link ?mode=resetPassword&oobCode=xxx) -->
+  <div class="modal-overlay" *ngIf="isPasswordResetMode" (click)="isPasswordResetMode = false">
+    <div class="modal-content auth-modal-content" (click)="$event.stopPropagation()">
+      <button class="modal-close-icon" (click)="isPasswordResetMode = false">✕</button>
+
+      <div class="auth-header">
+        <h2>Set New Password</h2>
+        <p>Enter your new password below to update your account</p>
+      </div>
+
+      <!-- Success State -->
+      <div class="forgot-success-banner" *ngIf="resetSuccess">
+        <span>✅ Password successfully updated! You can now sign in with your new password.</span>
+        <button class="forgot-close-modal-btn" (click)="isPasswordResetMode = false; openAuthModal('login')">
+          Sign In Now
+        </button>
+      </div>
+
+      <!-- Reset Form -->
+      <div *ngIf="!resetSuccess">
+        <div class="auth-error-banner" *ngIf="resetError">
+          {{ resetError }}
+        </div>
+
+        <form (ngSubmit)="submitPasswordReset()" class="auth-form">
+          <div class="form-group">
+            <label>New Password</label>
+            <input
+              type="password"
+              [(ngModel)]="resetNewPassword"
+              name="resetNewPassword"
+              placeholder="At least 6 characters"
+              required
+              autofocus
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Confirm New Password</label>
+            <input
+              type="password"
+              [(ngModel)]="resetConfirmPassword"
+              name="resetConfirmPassword"
+              placeholder="Re-enter new password"
+              required
+            />
+          </div>
+
+          <button type="submit" class="auth-submit-btn forgot-submit-btn" [disabled]="resetLoading">
+            <ng-container *ngIf="resetLoading">
+              <span class="auth-spinner"></span> Resetting Password…
+            </ng-container>
+            <ng-container *ngIf="!resetLoading">
+              🔒 Save New Password
+            </ng-container>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- MOBILE PWA APP INSTALL BANNER -->
   <div class="pwa-mobile-banner" *ngIf="showInstallBanner">
     <button class="banner-close-btn" (click)="dismissInstallBanner()" title="Dismiss">✕</button>

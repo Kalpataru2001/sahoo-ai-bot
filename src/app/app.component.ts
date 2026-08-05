@@ -91,6 +91,15 @@ export class AppComponent implements OnInit {
   forgotError = '';
   forgotSuccess = '';
 
+  // In-app Password Reset (from email link ?mode=resetPassword&oobCode=xxx)
+  isPasswordResetMode = false;
+  resetOobCode = '';
+  resetNewPassword = '';
+  resetConfirmPassword = '';
+  resetLoading = false;
+  resetError = '';
+  resetSuccess = false;
+
   // Share Feature
   showShareToast = false;
   shareToastMsg = '';
@@ -640,6 +649,8 @@ export class AppComponent implements OnInit {
     this.initPwaInstallPrompt();
     // Check if this is a shared chat link (?share=ID)
     this.checkSharedChatOnLoad();
+    // Check if this is a password reset link (?mode=resetPassword&oobCode=xxx)
+    this.checkPasswordResetOnLoad();
 
     // Subscribe to broadcast announcements from Admin Panel
     this.authService.subscribeToAnnouncements((data) => {
@@ -1600,6 +1611,57 @@ export class AppComponent implements OnInit {
       const url = new URL(window.location.href);
       url.searchParams.delete('admin_access');
       window.history.replaceState({}, '', url.toString());
+      this.cdr.detectChanges();
+    }
+  }
+
+  // ── In-app Password Reset Handler ─────────────────────────────────────────
+  checkPasswordResetOnLoad() {
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get('mode');
+    const oobCode = params.get('oobCode');
+    if (mode === 'resetPassword' && oobCode) {
+      this.resetOobCode = oobCode;
+      this.isPasswordResetMode = true;
+      // Clean the URL so the oobCode isn't visible / reusable
+      const url = new URL(window.location.href);
+      url.searchParams.delete('mode');
+      url.searchParams.delete('oobCode');
+      url.searchParams.delete('apiKey');
+      url.searchParams.delete('lang');
+      window.history.replaceState({}, '', url.toString());
+      this.cdr.detectChanges();
+    }
+  }
+
+  async submitPasswordReset() {
+    this.resetError = '';
+    if (!this.resetNewPassword || this.resetNewPassword.length < 6) {
+      this.resetError = 'Password must be at least 6 characters.';
+      return;
+    }
+    if (this.resetNewPassword !== this.resetConfirmPassword) {
+      this.resetError = 'Passwords do not match. Please try again.';
+      return;
+    }
+    this.resetLoading = true;
+    try {
+      await this.authService.confirmPasswordReset(this.resetOobCode, this.resetNewPassword);
+      this.resetSuccess = true;
+      this.resetNewPassword = '';
+      this.resetConfirmPassword = '';
+    } catch (err: any) {
+      if (err.code === 'auth/expired-action-code') {
+        this.resetError = 'This reset link has expired. Please request a new one.';
+      } else if (err.code === 'auth/invalid-action-code') {
+        this.resetError = 'This reset link is invalid or has already been used. Please request a new one.';
+      } else if (err.code === 'auth/weak-password') {
+        this.resetError = 'Password is too weak. Use at least 6 characters.';
+      } else {
+        this.resetError = err.message || 'Failed to reset password. Please try again.';
+      }
+    } finally {
+      this.resetLoading = false;
       this.cdr.detectChanges();
     }
   }
