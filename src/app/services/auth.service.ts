@@ -9,7 +9,8 @@ import {
   signOut, 
   onAuthStateChanged,
   User,
-  updateProfile
+  updateProfile,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 import { 
   getFirestore, 
@@ -146,6 +147,10 @@ export class AuthService {
 
   async logout(): Promise<void> {
     await signOut(this.auth);
+  }
+
+  async sendPasswordReset(email: string): Promise<void> {
+    await sendPasswordResetEmail(this.auth, email);
   }
 
   // --- FIRESTORE USER CHAT PERSISTENCE ---

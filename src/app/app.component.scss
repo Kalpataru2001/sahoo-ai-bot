@@ -2743,6 +2743,97 @@ header {
     color: #64748b;
     a { color: #0284c7; font-weight: 600; cursor: pointer; text-decoration: none; &:hover { text-decoration: underline; } }
   }
+
+  // ── Forgot Password link inside Password label ─────────────────
+  .form-group label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .forgot-password-link {
+    background: transparent;
+    border: none;
+    color: #0284c7;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: none;
+    &:hover { text-decoration: underline; color: #0369a1; }
+  }
+
+  // ── Forgot password view ─────────────────────────────────────────
+  .forgot-back-row {
+    margin-bottom: 8px;
+  }
+
+  .forgot-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    &:hover { color: #0284c7; background: rgba(2, 132, 199, 0.07); }
+  }
+
+  .forgot-success-banner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(5, 150, 105, 0.08));
+    border: 1.5px solid rgba(16, 185, 129, 0.35);
+    border-radius: 12px;
+    padding: 18px 16px;
+    margin-bottom: 8px;
+    text-align: center;
+    color: #065f46;
+    font-size: 0.88rem;
+    line-height: 1.5;
+
+    .forgot-close-modal-btn {
+      background: #10b981;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 22px;
+      font-weight: 700;
+      font-size: 0.86rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      &:hover { background: #059669; }
+    }
+  }
+
+  .forgot-submit-btn {
+    background: linear-gradient(135deg, #0ea5e9, #0284c7) !important;
+    &:hover { background: linear-gradient(135deg, #0284c7, #0369a1) !important; }
+  }
+
+  // ── Loading spinner ──────────────────────────────────────────────
+  .auth-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 4px;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
 }
 
 // Dark Mode Support for Auth & Header
@@ -2776,6 +2867,9 @@ header {
     .auth-divider { color: #64748b; &::before, &::after { border-bottom-color: #334155; } }
     .auth-form .form-group { label { color: #cbd5e1; } input { background: #0f172a; border-color: #334155; color: #f8fafc; } }
     .auth-toggle-footer { color: #94a3b8; a { color: #38bdf8; } }
+    .forgot-password-link { color: #38bdf8; &:hover { color: #7dd3fc; } }
+    .forgot-back-btn { color: #94a3b8; &:hover { color: #38bdf8; background: rgba(56,189,248,0.08); } }
+    .forgot-success-banner { background: rgba(16, 185, 129, 0.1); border-color: rgba(16,185,129,0.3); color: #34d399; }
   }
 }
 

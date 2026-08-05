@@ -84,6 +84,13 @@ export class AppComponent implements OnInit {
   authError = '';
   authLoading = false;
 
+  // Forgot Password
+  isForgotPasswordMode = false;
+  forgotEmail = '';
+  forgotLoading = false;
+  forgotError = '';
+  forgotSuccess = '';
+
   // Share Feature
   showShareToast = false;
   shareToastMsg = '';
@@ -1238,12 +1245,61 @@ export class AppComponent implements OnInit {
     this.authEmail = '';
     this.authPassword = '';
     this.authName = '';
+    this.isForgotPasswordMode = false;
+    this.forgotEmail = '';
+    this.forgotError = '';
+    this.forgotSuccess = '';
     this.isAuthModalOpen = true;
   }
 
   closeAuthModal() {
     this.isAuthModalOpen = false;
     this.authError = '';
+    this.isForgotPasswordMode = false;
+    this.forgotEmail = '';
+    this.forgotError = '';
+    this.forgotSuccess = '';
+  }
+
+  // ── Forgot Password ──────────────────────────────────────────────────────
+  openForgotPassword() {
+    this.isForgotPasswordMode = true;
+    this.forgotEmail = this.authEmail; // pre-fill if user already typed email
+    this.forgotError = '';
+    this.forgotSuccess = '';
+  }
+
+  async submitForgotPassword() {
+    const email = this.forgotEmail.trim();
+    if (!email) {
+      this.forgotError = 'Please enter your email address.';
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      this.forgotError = 'Please enter a valid email address.';
+      return;
+    }
+    this.forgotLoading = true;
+    this.forgotError = '';
+    this.forgotSuccess = '';
+    try {
+      await this.authService.sendPasswordReset(email);
+      this.forgotSuccess = `✉️ Reset link sent to ${email}. Check your inbox (and spam folder).`;
+    } catch (err: any) {
+      if (err.code === 'auth/user-not-found') {
+        this.forgotError = 'No account found with this email address.';
+      } else if (err.code === 'auth/invalid-email') {
+        this.forgotError = 'Please enter a valid email address.';
+      } else if (err.code === 'auth/too-many-requests') {
+        this.forgotError = 'Too many requests. Please wait a moment and try again.';
+      } else {
+        this.forgotError = err.message || 'Failed to send reset email. Try again.';
+      }
+    } finally {
+      this.forgotLoading = false;
+      this.cdr.detectChanges();
+    }
   }
 
   async loginWithGoogle() {
