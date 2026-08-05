@@ -151,10 +151,11 @@ export class AuthService {
   }
 
   async sendPasswordReset(email: string): Promise<void> {
-    // Redirect back to the app so we handle the reset UI ourselves
+    // Setting handleCodeInApp: true forces Firebase to send the link DIRECTLY
+    // to your web app URL (bypassing the default /__/auth/action handler page)
     const actionCodeSettings = {
       url: window.location.origin + '/',
-      handleCodeInApp: false
+      handleCodeInApp: true
     };
     await sendPasswordResetEmail(this.auth, email, actionCodeSettings);
   }
