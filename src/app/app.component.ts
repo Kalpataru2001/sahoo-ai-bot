@@ -88,6 +88,9 @@ export class AppComponent implements OnInit {
   showShareToast = false;
   shareToastMsg = '';
 
+  // Export Feature
+  showExportMenu = false;
+
   // Shared Chat Viewer (when someone opens a ?share=ID link)
   isSharedChatView = false;
   sharedChatData: { title: string; messages: any[]; sharedByName: string; createdAt: string } | null = null;
@@ -111,6 +114,144 @@ export class AppComponent implements OnInit {
   closeAdminPanel() {
     this.isAdminPanelOpen = false;
     this.cdr.detectChanges();
+  }
+
+  // ── Export Chat ─────────────────────────────────────────────────────────────
+  toggleExportMenu() {
+    this.showExportMenu = !this.showExportMenu;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(e: MouseEvent) {
+    const target = e.target as HTMLElement;
+    if (!target.closest('.export-wrapper')) {
+      this.showExportMenu = false;
+    }
+  }
+
+  getCurrentChatTitle(): string {
+    const session = this.sessions.find(s => s.id === this.currentSessionId);
+    return session?.title || 'Chat';
+  }
+
+  exportAsMarkdown() {
+    const title = this.getCurrentChatTitle();
+    const date = new Date().toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'short' });
+    const personas = this.activePersonas.length > 0
+      ? this.activePersonas.map(p => `${p.icon} ${p.name}`).join(', ')
+      : '🤖 AI Companion (Default)';
+
+    const lines: string[] = [
+      `# AI Companion — Chat Export`,
+      ``,
+      `**Chat:** ${title}`,
+      `**Exported:** ${date}`,
+      `**Active Personas:** ${personas}`,
+      `**Messages:** ${this.messages.length}`,
+      ``,
+      `---`,
+      ``,
+    ];
+
+    this.messages.forEach((msg, i) => {
+      const label = msg.role === 'user'
+        ? `### 👤 You`
+        : `### 🤖 AI Companion`;
+      lines.push(label);
+      lines.push(msg.text);
+      lines.push('');
+      if (i < this.messages.length - 1) lines.push('---');
+      lines.push('');
+    });
+
+    lines.push(`---`);
+    lines.push(`*Exported from AI Companion · ${date}*`);
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_export.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+    this.showExportMenu = false;
+  }
+
+  exportAsPDF() {
+    const title = this.getCurrentChatTitle();
+    const date = new Date().toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'short' });
+    const personas = this.activePersonas.length > 0
+      ? this.activePersonas.map(p => `${p.icon} ${p.name}`).join(', ')
+      : '🤖 AI Companion (Default)';
+
+    const messagesHtml = this.messages.map(msg => {
+      const isUser = msg.role === 'user';
+      const label = isUser ? '👤 You' : '🤖 AI Companion';
+      const cls = isUser ? 'user-msg' : 'bot-msg';
+      // Convert markdown-like content to safe HTML for print
+      const safeText = msg.text
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\n/g, '<br>');
+      return `
+        <div class="message ${cls}">
+          <div class="msg-label">${label}</div>
+          <div class="msg-body">${safeText}</div>
+        </div>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${title} — AI Companion Export</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #fff; color: #1e293b; padding: 32px; max-width: 800px; margin: 0 auto; }
+    .export-header { border-bottom: 2px solid #0084ff; padding-bottom: 16px; margin-bottom: 24px; }
+    .export-header h1 { font-size: 1.5rem; color: #0084ff; margin-bottom: 6px; }
+    .export-meta { font-size: 0.82rem; color: #64748b; display: flex; gap: 16px; flex-wrap: wrap; }
+    .export-meta span { background: #f1f5f9; padding: 3px 10px; border-radius: 20px; }
+    .messages { display: flex; flex-direction: column; gap: 16px; }
+    .message { padding: 14px 16px; border-radius: 12px; page-break-inside: avoid; }
+    .user-msg { background: #eff6ff; border-left: 4px solid #0084ff; }
+    .bot-msg { background: #f8fafc; border-left: 4px solid #10b981; }
+    .msg-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 6px; }
+    .user-msg .msg-label { color: #0084ff; }
+    .bot-msg .msg-label { color: #10b981; }
+    .msg-body { font-size: 0.92rem; line-height: 1.65; }
+    code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.85em; }
+    strong { font-weight: 700; }
+    .export-footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid #e2e8f0; font-size: 0.78rem; color: #94a3b8; text-align: center; }
+    @media print {
+      body { padding: 16px; }
+      .message { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="export-header">
+    <h1>📤 ${title}</h1>
+    <div class="export-meta">
+      <span>📅 ${date}</span>
+      <span>💬 ${this.messages.length} messages</span>
+      <span>${personas}</span>
+    </div>
+  </div>
+  <div class="messages">${messagesHtml}</div>
+  <div class="export-footer">Exported from AI Companion · ${date}</div>
+  <script>window.onload = () => { window.print(); }<\/script>
+</body>
+</html>`;
+
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+    }
+    this.showExportMenu = false;
   }
 
   // Ctrl+Shift+A: toggle panel within the same session (after first login via Sign In form)

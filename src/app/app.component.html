@@ -111,6 +111,40 @@
         </div>
 
         <div class="header-actions">
+          <!-- Export Chat Button -->
+          <div class="export-wrapper" *ngIf="messages.length > 0">
+            <button class="icon-btn export-btn" (click)="toggleExportMenu()" title="Export Chat" [class.active]="showExportMenu">
+              <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+            </button>
+            <!-- Export Dropdown -->
+            <div class="export-dropdown" *ngIf="showExportMenu" (click)="$event.stopPropagation()">
+              <div class="export-dropdown-header">
+                <span>⬇️ Export Chat</span>
+                <button class="export-close" (click)="showExportMenu = false">✕</button>
+              </div>
+              <p class="export-meta">{{ messages.length }} messages · {{ getCurrentChatTitle() }}</p>
+              <div class="export-options">
+                <button class="export-option-btn markdown-btn" (click)="exportAsMarkdown()">
+                  <span class="export-opt-icon">📄</span>
+                  <div class="export-opt-info">
+                    <span class="export-opt-title">Download Markdown</span>
+                    <span class="export-opt-desc">Plain text with formatting (.md)</span>
+                  </div>
+                </button>
+                <button class="export-option-btn pdf-btn" (click)="exportAsPDF()">
+                  <span class="export-opt-icon">🖨️</span>
+                  <div class="export-opt-info">
+                    <span class="export-opt-title">Export as PDF</span>
+                    <span class="export-opt-desc">Print-ready formatted document</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
           <button class="icon-btn share-btn" (click)="shareChat()" title="Share this chat">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="18" cy="5" r="3"></circle>
