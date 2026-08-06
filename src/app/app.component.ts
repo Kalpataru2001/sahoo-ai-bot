@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { marked } from 'marked';
+import { marked, Renderer } from 'marked';
 import { User } from 'firebase/auth';
 import { AuthService, UserPreferences, UserMemory } from './services/auth.service';
 import { AdminPanelComponent } from './admin-panel/admin-panel.component';
@@ -107,6 +107,70 @@ export class AppComponent implements OnInit {
   // Export Feature
   showExportMenu = false;
 
+  // ── Code Block Fullscreen ──────────────────────────────────────────────────
+  codeFullscreenContent = '';
+  codeFullscreenLang = '';
+  isCodeFullscreenOpen = false;
+  fsCopied = false;
+
+  closeCodeFullscreen() {
+    this.isCodeFullscreenOpen = false;
+    this.codeFullscreenContent = '';
+    this.codeFullscreenLang = '';
+    this.fsCopied = false;
+  }
+
+  copyCodeFromFullscreen() {
+    navigator.clipboard.writeText(this.codeFullscreenContent).then(() => {
+      this.fsCopied = true;
+      this.cdr.detectChanges();
+      setTimeout(() => { this.fsCopied = false; this.cdr.detectChanges(); }, 2000);
+    });
+  }
+
+  // Global click handler for copy & fullscreen buttons injected into markdown HTML
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(e: MouseEvent) {
+    const target = e.target as HTMLElement;
+
+    // Close export dropdown when clicking outside
+    if (!target.closest('.export-wrapper')) {
+      this.showExportMenu = false;
+    }
+
+    // Code block: Copy button
+    const copyBtn = target.closest('.code-copy-btn') as HTMLElement | null;
+    if (copyBtn) {
+      const block = copyBtn.closest('.code-block-wrapper');
+      const codeEl = block?.querySelector('code');
+      if (codeEl) {
+        const text = codeEl.innerText;
+        navigator.clipboard.writeText(text).then(() => {
+          copyBtn.classList.add('copied');
+          copyBtn.innerHTML = '✓ Copied!';
+          setTimeout(() => {
+            copyBtn.classList.remove('copied');
+            copyBtn.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy';
+          }, 2000);
+        });
+      }
+    }
+
+    // Code block: Fullscreen button
+    const fsBtn = target.closest('.code-fullscreen-btn') as HTMLElement | null;
+    if (fsBtn) {
+      const block = fsBtn.closest('.code-block-wrapper');
+      const codeEl = block?.querySelector('code');
+      const lang = (block as HTMLElement)?.dataset?.['lang'] || '';
+      if (codeEl) {
+        this.codeFullscreenContent = codeEl.innerText;
+        this.codeFullscreenLang = lang;
+        this.isCodeFullscreenOpen = true;
+        this.cdr.detectChanges();
+      }
+    }
+  }
+
   // Shared Chat Viewer (when someone opens a ?share=ID link)
   isSharedChatView = false;
   sharedChatData: { title: string; messages: any[]; sharedByName: string; createdAt: string } | null = null;
@@ -137,13 +201,6 @@ export class AppComponent implements OnInit {
     this.showExportMenu = !this.showExportMenu;
   }
 
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(e: MouseEvent) {
-    const target = e.target as HTMLElement;
-    if (!target.closest('.export-wrapper')) {
-      this.showExportMenu = false;
-    }
-  }
 
   getCurrentChatTitle(): string {
     const session = this.sessions.find(s => s.id === this.currentSessionId);
@@ -280,6 +337,11 @@ export class AppComponent implements OnInit {
         this.isAdminPanelOpen = !this.isAdminPanelOpen;
         this.cdr.detectChanges();
       }
+    }
+    // Esc closes code fullscreen modal
+    if (e.key === 'Escape' && this.isCodeFullscreenOpen) {
+      this.closeCodeFullscreen();
+      this.cdr.detectChanges();
     }
   }
 
@@ -577,13 +639,38 @@ export class AppComponent implements OnInit {
   // Cache for rendered markdown HTML to prevent DOM node recreation & preserve text selection!
   private markdownCache = new Map<string, SafeHtml>();
 
+  /** Custom marked renderer — enhances <code> blocks with copy, language badge, fullscreen. */
+  private buildMarkedRenderer(): Renderer {
+    const renderer = new Renderer();
+    renderer.code = ({ text, lang }: { text: string; lang?: string }) => {
+      const language = lang || 'plaintext';
+      const escaped = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      const copyIcon = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+      const expandIcon = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>`;
+      return `<div class="code-block-wrapper" data-lang="${language}">
+  <div class="code-block-header">
+    <span class="code-lang-badge">${language}</span>
+    <div class="code-block-actions">
+      <button class="code-copy-btn" title="Copy code">${copyIcon} Copy</button>
+      <button class="code-fullscreen-btn" title="Expand">${expandIcon} Expand</button>
+    </div>
+  </div>
+  <pre class="code-pre"><code class="language-${language}">${escaped}</code></pre>
+</div>`;
+    };
+    return renderer;
+  }
+
   renderMarkdown(text: string): SafeHtml {
     if (!text) return '';
     if (this.markdownCache.has(text)) {
       return this.markdownCache.get(text)!;
     }
     try {
-      const html = marked.parse(text, { breaks: true }) as string;
+      const html = marked.parse(text, { breaks: true, renderer: this.buildMarkedRenderer() }) as string;
       const safe = this.sanitizer.bypassSecurityTrustHtml(html);
       this.markdownCache.set(text, safe);
       return safe;
@@ -594,18 +681,12 @@ export class AppComponent implements OnInit {
     }
   }
 
-  /**
-   * Same as renderMarkdown but wraps every occurrence of the search query
-   * inside <mark class="search-mark"> tags — only in text nodes, never inside
-   * HTML tag attributes (uses a negative-lookahead to skip inside < ... >).
-   * Not cached — only used on the single highlighted message at a time.
-   */
   renderMarkdownWithHighlight(text: string): SafeHtml {
     if (!text) return '';
     const q = this.chatSearchQuery.trim();
     if (!q) return this.renderMarkdown(text);
     try {
-      const html = marked.parse(text, { breaks: true }) as string;
+      const html = marked.parse(text, { breaks: true, renderer: this.buildMarkedRenderer() }) as string;
       const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       // Negative lookahead: don't match inside HTML tag bodies (between < and >)
       const highlighted = html.replace(

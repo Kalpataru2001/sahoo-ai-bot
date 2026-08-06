@@ -2874,6 +2874,214 @@ header {
 }
 
 // ==========================================
+// CODE BLOCK ENHANCEMENTS
+// ==========================================
+
+// Injected by custom marked renderer into message bubbles
+.code-block-wrapper {
+  margin: 10px 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #2d3748;
+  font-size: 0.84rem;
+
+  .code-block-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 12px;
+    background: #1a202c;
+    border-bottom: 1px solid #2d3748;
+    user-select: none;
+  }
+
+  .code-lang-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #68d391;
+    background: rgba(104, 211, 145, 0.12);
+    padding: 2px 8px;
+    border-radius: 20px;
+    border: 1px solid rgba(104, 211, 145, 0.25);
+  }
+
+  .code-block-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .code-copy-btn,
+  .code-fullscreen-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #a0aec0;
+    font-size: 0.74rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #e2e8f0;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    &.copied {
+      background: rgba(72, 187, 120, 0.2);
+      border-color: rgba(72, 187, 120, 0.4);
+      color: #68d391;
+    }
+
+    svg { flex-shrink: 0; }
+  }
+
+  .code-pre {
+    margin: 0;
+    padding: 14px 16px;
+    background: #0d1117;
+    overflow-x: auto;
+    font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 0.83rem;
+    line-height: 1.65;
+    color: #e2e8f0;
+    counter-reset: line;
+
+    code {
+      background: none !important;
+      padding: 0 !important;
+      color: inherit;
+      font-family: inherit;
+      white-space: pre;
+    }
+  }
+}
+
+// Light mode — code blocks still use dark theme (standard practice)
+.app-layout:not(.dark-mode) {
+  .code-block-wrapper {
+    border-color: #e2e8f0;
+    .code-block-header { background: #1a202c; }
+    .code-pre { background: #0d1117; }
+  }
+}
+
+// ── Code Fullscreen Modal ─────────────────────────────────────────────────────
+.code-fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeInOverlay 0.2s ease;
+}
+
+.code-fullscreen-modal {
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  background: #0d1117;
+  border-radius: 14px;
+  border: 1px solid #2d3748;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  animation: slideUpModal 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+
+  .code-fullscreen-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: #1a202c;
+    border-bottom: 1px solid #2d3748;
+    flex-shrink: 0;
+
+    .code-lang-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #68d391;
+      background: rgba(104, 211, 145, 0.12);
+      padding: 2px 8px;
+      border-radius: 20px;
+      border: 1px solid rgba(104, 211, 145, 0.25);
+    }
+
+    .code-fullscreen-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .code-fs-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #a0aec0;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 5px 14px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      &:hover { background: rgba(255,255,255,0.13); color: #fff; }
+    }
+
+    .code-fs-close-btn {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: #fc8181;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 5px 14px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      &:hover { background: rgba(239, 68, 68, 0.22); color: #feb2b2; }
+    }
+  }
+
+  .code-fullscreen-pre {
+    margin: 0;
+    padding: 20px 24px;
+    overflow: auto;
+    flex: 1;
+    font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 0.87rem;
+    line-height: 1.7;
+    color: #e2e8f0;
+    white-space: pre-wrap;
+    word-break: break-word;
+
+    code { background: none; padding: 0; color: inherit; font-family: inherit; }
+  }
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideUpModal {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+// ==========================================
 // MOBILE PWA APP INSTALL BANNER (BOTTOM STICKY)
 // ==========================================
 .pwa-mobile-banner {

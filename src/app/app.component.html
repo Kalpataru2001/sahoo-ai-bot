@@ -509,6 +509,26 @@
     </div>
   </div>
 
+  <!-- CODE FULLSCREEN MODAL -->
+  <div class="code-fullscreen-overlay" *ngIf="isCodeFullscreenOpen" (click)="closeCodeFullscreen()">
+    <div class="code-fullscreen-modal" (click)="$event.stopPropagation()">
+      <div class="code-fullscreen-header">
+        <span class="code-lang-badge">{{ codeFullscreenLang || 'code' }}</span>
+        <div class="code-fullscreen-actions">
+          <button class="code-fs-copy-btn" (click)="copyCodeFromFullscreen()" title="Copy code">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            {{ fsCopied ? '✓ Copied!' : 'Copy' }}
+          </button>
+          <button class="code-fs-close-btn" (click)="closeCodeFullscreen()" title="Close (Esc)">✕ Close</button>
+        </div>
+      </div>
+      <pre class="code-fullscreen-pre"><code>{{ codeFullscreenContent }}</code></pre>
+    </div>
+  </div>
+
   <!-- MOBILE PWA APP INSTALL BANNER -->
   <div class="pwa-mobile-banner" *ngIf="showInstallBanner">
     <button class="banner-close-btn" (click)="dismissInstallBanner()" title="Dismiss">✕</button>
